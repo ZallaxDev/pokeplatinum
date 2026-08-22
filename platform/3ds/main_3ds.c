@@ -164,6 +164,39 @@ static bool InspectGeneratedNarc(void)
     return true;
 }
 
+static bool BuildLogicalGrid(PlatformScreen screen)
+{
+    uint32_t *pixels = PlatformGraphics_GetLogicalPixels(screen);
+    uint32_t base = screen == PLATFORM_SCREEN_TOP
+        ? PLATFORM_RGBA(12, 42, 70, 255)
+        : PLATFORM_RGBA(66, 24, 56, 255);
+    uint32_t alternate = screen == PLATFORM_SCREEN_TOP
+        ? PLATFORM_RGBA(18, 52, 82, 255)
+        : PLATFORM_RGBA(78, 30, 68, 255);
+    uint32_t grid = screen == PLATFORM_SCREEN_TOP
+        ? PLATFORM_RGBA(42, 82, 110, 255)
+        : PLATFORM_RGBA(108, 48, 92, 255);
+    uint32_t border = screen == PLATFORM_SCREEN_TOP
+        ? PLATFORM_RGBA(100, 220, 255, 255)
+        : PLATFORM_RGBA(255, 120, 205, 255);
+
+    if (pixels == NULL) {
+        return false;
+    }
+    for (unsigned int y = 0; y < PLATFORM_LOGICAL_HEIGHT; y++) {
+        for (unsigned int x = 0; x < PLATFORM_LOGICAL_WIDTH; x++) {
+            bool atBorder = x < 2 || y < 2
+                || x >= PLATFORM_LOGICAL_WIDTH - 2 || y >= PLATFORM_LOGICAL_HEIGHT - 2;
+            bool atGrid = (x % 16) == 0 || (y % 16) == 0;
+            bool checker = ((x / 16) + (y / 16)) & 1;
+            pixels[y * PLATFORM_LOGICAL_WIDTH + x] = atBorder
+                ? border
+                : atGrid ? grid : checker ? alternate : base;
+        }
+    }
+    return PlatformGraphics_UploadLogicalSurface(screen);
+}
+
 static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *input,
     const char *lastInput, const PlatformTickScheduler *tickScheduler)
 {
@@ -207,6 +240,13 @@ int main(void)
     bool platformReady = Platform_Init();
 
     PlatformTickScheduler_Init(&tickScheduler);
+    if (BuildLogicalGrid(PLATFORM_SCREEN_TOP)
+        && BuildLogicalGrid(PLATFORM_SCREEN_BOTTOM)) {
+        Debug_Log("SURFACE 256x192 -> 320x240");
+        Debug_Log("SURFACE TEST OK");
+    } else {
+        Debug_Error("SURFACE TEST FAILED");
+    }
 
 #if PORT3DS_FATAL_SMOKE
     Debug_Fatal("BOOT", "main", "deliberate fatal smoke test");
@@ -277,11 +317,10 @@ int main(void)
 #endif
 
         PlatformGraphics_BeginFrame();
+        PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_TOP);
         RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler);
+        PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_BOTTOM);
         Debug_Render(frame, lastInput, tickScheduler.tickCount, tickScheduler.elapsedNs);
-#if !PORT3DS_DEBUG_OVERLAY
-        PlatformGraphics_BeginScreen(PLATFORM_SCREEN_BOTTOM);
-#endif
         Platform_WaitForFrame();
         frame++;
 

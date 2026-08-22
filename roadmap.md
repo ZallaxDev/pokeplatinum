@@ -76,8 +76,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 - [x] Initialize Citro2D/Citro3D render targets.
   - Verify: top and bottom screens display distinct test colors and overlay reports `GPU OK`.
   - Result: isolated Azahar displayed a navy top target and plum bottom target at 60 FPS, with the Citro2D debug overlay reporting `GPU OK`; debug, release, and fatal-screen paths all rendered through the GPU backend.
-- [ ] Present logical 256x192 top and bottom surfaces.
+- [x] Present logical 256x192 top and bottom surfaces.
   - Verify: a pixel-grid test scales to 320x240 with the top image centered in 400x240.
+  - Result: nearest-filtered 16-pixel logical grid cells rendered as 20-pixel physical cells; isolated Azahar showed the 320x240 top surface at x=40..359, the bottom surface at x=0..319, and `SURFACE TEST OK` at 60 FPS.
 - [ ] Render a test texture, four sprites, and alpha blending.
   - Verify: emulator shows the expected texture and four independently positioned sprites, one semitransparent.
 - [ ] Decode and render one real Platinum 2D asset.

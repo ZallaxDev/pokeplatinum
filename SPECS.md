@@ -73,7 +73,7 @@ BG/window/sprite/model state -> renderer interface -> Citro2D/Citro3D
 
 VRAM banks, OAM addresses, GX/G2 registers, HBlank writes, and DS texture proxies are not emulated as physical hardware. The renderer reproduces their visible semantics. HBlank effects may be implemented as precomputed scanline/mesh effects.
 
-The native presentation base owns Citro3D and Citro2D initialization, one render target for each physical screen, frame submission, and a bounded GPU text buffer. Bootstrap and fatal diagnostics use the same GPU path instead of mixing software consoles with Citro3D framebuffers. Logical DS surfaces and game render commands remain separate follow-up layers.
+The native presentation base owns Citro3D and Citro2D initialization, one render target for each physical screen, frame submission, and a bounded GPU text buffer. Bootstrap and fatal diagnostics use the same GPU path instead of mixing software consoles with Citro3D framebuffers. Each screen also owns a row-major `256x192` RGBA logical surface; the backend converts it to PICA tiled texture layout and presents it nearest-filtered at `320x240`. The top image is centered at physical x=40 while the bottom image fills its 320-pixel width. Game render commands remain a separate follow-up layer.
 
 ## Audio
 

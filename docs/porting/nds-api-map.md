@@ -8,7 +8,7 @@
 | `CARD_*` | `src/savedata.c` | save flash | transactional `PlatformSave` file | storage base implemented; serializer pending |
 | `OS_TIMER_3`, timer registers | `src/timer.c` | monotonic timing | platform monotonic ticks | bootstrap scheduler implemented; gameplay pending |
 | `RTC_*` | `src/rtc.c` | wall clock | 3DS system time service | pending |
-| `GX_*`, `GXS_*`, `G2_*` | graphics and applications | display and 2D engines | renderer commands via Citro2D/Citro3D | physical targets initialized; logical renderer pending |
+| `GX_*`, `GXS_*`, `G2_*` | graphics and applications | display and 2D engines | renderer commands via Citro2D/Citro3D | physical targets and logical screen surfaces implemented; game renderer pending |
 | `NNS_G2d*`, OAM manager | sprite/graphics modules | resource parsing and sprites | portable decoders plus sprite batches | pending |
 | `NNS_G3d*`, `G3_*` | field, battle, effects | model rendering | Citro3D backend | pending |
 | `NNS_Gfd*` | transfers and graphics | VRAM allocation/upload | explicit GPU resource manager | pending |

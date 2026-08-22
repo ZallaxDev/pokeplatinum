@@ -15,4 +15,5 @@
 | Generated NARC export | Pass | BOOT-01 debug `46ec493e...37c53b` | `evo.narc`: 26,468 bytes, FNV-1a `a955d414` | Source artifact SHA-256 `fe6e4ec4...7862d` |
 | Portable NARC parser | Pass | BOOT-01 debug `b9889e5c...72adb3` | 508 members; sampled sizes `44/44/44`; `NARC PARSE OK` | Validates all member ranges |
 | Citro2D/Citro3D targets | Pass | BOOT-01 debug `6f44ded2...198b8e` | Distinct navy/plum targets at 60 FPS; overlay reports `GPU OK` | Debug, release, and fatal diagnostics use GPU text |
+| Logical screen surfaces | Pass | BOOT-01 debug `33ac2372...006adb` | `256x192` pixel grids scale nearest to `320x240`; top centered at x=40 | Overlay reports `SURFACE TEST OK` |
 | Gameplay | Not started | - | - | NDS runtime not linked yet |
