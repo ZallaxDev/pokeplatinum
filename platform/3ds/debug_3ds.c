@@ -124,10 +124,13 @@ bool Debug_IsOverlayEnabled(void)
     return sOverlayEnabled;
 }
 
-void Debug_Render(unsigned long long frame, const char *lastInput)
+void Debug_Render(unsigned long long frame, const char *lastInput,
+    unsigned long long gameTicks, unsigned long long elapsedNs)
 {
 #if PORT3DS_DEBUG_OVERLAY
-    const unsigned int visibleLines = 18;
+    const unsigned int visibleLines = 17;
+    unsigned long long elapsedMs = elapsedNs / 1000000ULL;
+    unsigned long long rateMilliHz = elapsedMs == 0 ? 0 : gameTicks * 1000000ULL / elapsedMs;
     unsigned int count;
     unsigned int start;
 
@@ -139,15 +142,19 @@ void Debug_Render(unsigned long long frame, const char *lastInput)
     printf("\x1b[1;1H\x1b[36;1mPOKEPLATINUM 3DS DEBUG\x1b[0m");
     printf("\x1b[2;1HMilestone: BOOT-01  Frame: %-10llu", frame);
     printf("\x1b[3;1HLast input: %-24s", lastInput);
+    printf("\x1b[4;1HTicks: %-10llu Rate: %llu.%03llu Hz", gameTicks,
+        rateMilliHz / 1000ULL, rateMilliHz % 1000ULL);
 
     count = sLineCount < visibleLines ? sLineCount : visibleLines;
     start = (sNextLine + DEBUG_LOG_LINES - count) % DEBUG_LOG_LINES;
     for (unsigned int i = 0; i < visibleLines; i++) {
         const char *line = i < count ? sLines[(start + i) % DEBUG_LOG_LINES] : "";
-        printf("\x1b[%u;1H%-40.40s", i + 5, line);
+        printf("\x1b[%u;1H%-40.40s", i + 6, line);
     }
 #else
     (void)frame;
     (void)lastInput;
+    (void)gameTicks;
+    (void)elapsedNs;
 #endif
 }

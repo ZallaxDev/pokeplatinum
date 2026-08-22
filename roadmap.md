@@ -55,8 +55,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 - [x] Mount RomFS and read a packaged smoke resource.
   - Verify: debug overlay reports `ROMFS OK`, file size, and FNV-1a checksum for `port3ds-smoke.txt`.
   - Result: Azahar reported `ROMFS OK`, loaded `port3ds-smoke.txt`, and displayed size 53 with FNV-1a `9cd859d0`.
-- [ ] Add monotonic time and fixed game-tick scheduling.
+- [x] Add monotonic time and fixed game-tick scheduling.
   - Verify: overlay reports stable game ticks at the original logical cadence for ten minutes.
+  - Result: the ARM11 monotonic counter and `59.8261 Hz` rational scheduler ran for approximately 622.5 seconds in isolated Azahar; the overlay reported 37,243 ticks at 59.825 Hz versus 37,246 presentation frames.
 - [ ] Add a portable heap backend.
   - Verify: allocate, align, write, read, and free from representative heap IDs; overlay reports `HEAP TEST OK`.
 - [ ] Add file-backed save storage with atomic replacement.

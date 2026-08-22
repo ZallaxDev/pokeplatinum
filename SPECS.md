@@ -79,7 +79,7 @@ High-level music/SFX/cry policy remains game logic. NNS Sound and ARM7 services 
 
 ## Time
 
-The platform provides monotonic ticks, frame synchronization, wall clock, and delays. Logical game cadence remains equivalent to the original, approximately 60 ticks per second, without binding simulation to physical presentation. Direct NDS timer registers and IRQs are not retained.
+The platform uses the ARM11 system counter for monotonic nanoseconds. Logical game cadence is scheduled at the original DS rate of `59.8261 Hz` with a rational accumulator, without binding simulation to physical presentation. Frame synchronization remains a separate VBlank operation. Wall clock and delay APIs will be added when their first consumers are ported. Direct NDS timer registers and IRQs are not retained.
 
 ## Save
 

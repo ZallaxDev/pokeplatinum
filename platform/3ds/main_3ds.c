@@ -5,6 +5,7 @@
 #include "platform/filesystem.h"
 #include "platform/input.h"
 #include "platform/platform.h"
+#include "platform/time.h"
 
 static const char *DescribeInput(uint32_t keys)
 {
@@ -38,11 +39,14 @@ int main(void)
 {
     static unsigned char smokeData[256];
     PlatformInputState input = { 0 };
+    PlatformTickScheduler tickScheduler;
     PrintConsole topConsole;
     unsigned long long frame = 0;
     size_t smokeSize = 0;
     const char *lastInput = "NONE";
     bool platformReady = Platform_Init();
+
+    PlatformTickScheduler_Init(&tickScheduler);
 
     consoleInit(GFX_TOP, &topConsole);
     consoleSelect(&topConsole);
@@ -54,6 +58,8 @@ int main(void)
 #if PORT3DS_DEBUG_OVERLAY
     printf("\x1b[15;4HL+R+SELECT toggles debug.");
 #endif
+    printf("\x1b[17;4HTicks: %10llu", tickScheduler.tickCount);
+    printf("\x1b[18;4HCadence:  0.000 Hz");
 
 #if PORT3DS_FATAL_SMOKE
     Debug_Fatal("BOOT", "main", "deliberate fatal smoke test");
@@ -70,6 +76,10 @@ int main(void)
     }
 
     while (Platform_MainLoop()) {
+        unsigned long long elapsedMs;
+        unsigned long long rateMilliHz;
+
+        PlatformTickScheduler_Update(&tickScheduler);
         PlatformInput_Update(&input);
         if (input.pressed != 0) {
             lastInput = DescribeInput(input.pressed);
@@ -91,7 +101,12 @@ int main(void)
         printf("\x1b[11;8HLast: %-10s", lastInput);
         printf("\x1b[12;8HTouch: %3u,%3u %-4s", input.touchX, input.touchY,
             input.touchHeld ? "DOWN" : "UP");
-        Debug_Render(frame, lastInput);
+        elapsedMs = tickScheduler.elapsedNs / 1000000ULL;
+        rateMilliHz = elapsedMs == 0 ? 0 : tickScheduler.tickCount * 1000000ULL / elapsedMs;
+        printf("\x1b[17;4HTicks: %10llu", tickScheduler.tickCount);
+        printf("\x1b[18;4HCadence: %2llu.%03llu Hz", rateMilliHz / 1000ULL,
+            rateMilliHz % 1000ULL);
+        Debug_Render(frame, lastInput, tickScheduler.tickCount, tickScheduler.elapsedNs);
         Platform_WaitForFrame();
         frame++;
 
