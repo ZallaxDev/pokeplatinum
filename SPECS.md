@@ -73,6 +73,8 @@ BG/window/sprite/model state -> renderer interface -> Citro2D/Citro3D
 
 VRAM banks, OAM addresses, GX/G2 registers, HBlank writes, and DS texture proxies are not emulated as physical hardware. The renderer reproduces their visible semantics. HBlank effects may be implemented as precomputed scanline/mesh effects.
 
+The native presentation base owns Citro3D and Citro2D initialization, one render target for each physical screen, frame submission, and a bounded GPU text buffer. Bootstrap and fatal diagnostics use the same GPU path instead of mixing software consoles with Citro3D framebuffers. Logical DS surfaces and game render commands remain separate follow-up layers.
+
 ## Audio
 
 High-level music/SFX/cry policy remains game logic. NNS Sound and ARM7 services are replaced behind an audio backend. NDSP does not consume SDAT directly, so sequence/bank playback requires either a maintained decoder or an automated build-time conversion; manual per-asset conversion is prohibited.

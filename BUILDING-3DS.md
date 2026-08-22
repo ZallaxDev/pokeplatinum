@@ -35,7 +35,7 @@ pacman -Qg 3ds-dev
 
 ## Build
 
-Debug build with the bottom-screen ring-buffer console:
+Debug build with the bottom-screen GPU ring-buffer overlay:
 
 ```bash
 make 3ds DEBUG=1

@@ -5,6 +5,7 @@
 #include "platform/archive.h"
 #include "platform/debug.h"
 #include "platform/filesystem.h"
+#include "platform/graphics.h"
 #include "platform/input.h"
 #include "platform/memory.h"
 #include "platform/platform.h"
@@ -163,32 +164,49 @@ static bool InspectGeneratedNarc(void)
     return true;
 }
 
+static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *input,
+    const char *lastInput, const PlatformTickScheduler *tickScheduler)
+{
+    unsigned long long elapsedMs = tickScheduler->elapsedNs / 1000000ULL;
+    unsigned long long rateMilliHz = elapsedMs == 0
+        ? 0
+        : tickScheduler->tickCount * 1000000ULL / elapsedMs;
+
+    PlatformGraphics_BeginScreen(PLATFORM_SCREEN_TOP);
+    PlatformGraphics_DrawText(35.0f, 18.0f, 0.65f, PLATFORM_RGBA(120, 220, 255, 255),
+        "POKEMON PLATINUM - NATIVE 3DS");
+    PlatformGraphics_DrawText(155.0f, 55.0f, 0.55f,
+        platformReady ? PLATFORM_RGBA(120, 255, 170, 255) : PLATFORM_RGBA(255, 100, 100, 255),
+        "BOOT %s", platformReady ? "OK" : "FAILED");
+    PlatformGraphics_DrawText(127.0f, 82.0f, 0.48f, PLATFORM_RGBA(220, 230, 255, 255),
+        "Milestone BOOT-01");
+    PlatformGraphics_DrawText(52.0f, 112.0f, 0.42f, PLATFORM_RGBA(255, 255, 255, 255),
+        "Last: %-10s  Touch: %3u,%3u %s", lastInput, input->touchX, input->touchY,
+        input->touchHeld ? "DOWN" : "UP");
+    PlatformGraphics_DrawText(52.0f, 138.0f, 0.42f, PLATFORM_RGBA(255, 255, 255, 255),
+        "Ticks: %llu", tickScheduler->tickCount);
+    PlatformGraphics_DrawText(52.0f, 157.0f, 0.42f, PLATFORM_RGBA(255, 255, 255, 255),
+        "Cadence: %llu.%03llu Hz", rateMilliHz / 1000ULL, rateMilliHz % 1000ULL);
+    PlatformGraphics_DrawText(52.0f, 194.0f, 0.38f, PLATFORM_RGBA(180, 200, 220, 255),
+#if PORT3DS_DEBUG_OVERLAY
+        "START exits  |  L+R+SELECT toggles debug");
+#else
+        "START exits this bootstrap build");
+#endif
+}
+
 int main(void)
 {
     static unsigned char smokeData[256];
     PlatformInputState input = { 0 };
     PlatformTickScheduler tickScheduler;
     SaveSmokeRecord saveRecord;
-    PrintConsole topConsole;
     unsigned long long frame = 0;
     size_t smokeSize = 0;
     const char *lastInput = "NONE";
     bool platformReady = Platform_Init();
 
     PlatformTickScheduler_Init(&tickScheduler);
-
-    consoleInit(GFX_TOP, &topConsole);
-    consoleSelect(&topConsole);
-    printf("\x1b[2;6HPOKEMON PLATINUM - NATIVE 3DS");
-    printf("\x1b[4;17HBOOT %s", platformReady ? "OK" : "FAILED");
-    printf("\x1b[6;14HMilestone BOOT-01");
-    printf("\x1b[9;5HButtons and touch are shown below.");
-    printf("\x1b[14;4HSTART exits this bootstrap build.");
-#if PORT3DS_DEBUG_OVERLAY
-    printf("\x1b[15;4HL+R+SELECT toggles debug.");
-#endif
-    printf("\x1b[17;4HTicks: %10llu", tickScheduler.tickCount);
-    printf("\x1b[18;4HCadence:  0.000 Hz");
 
 #if PORT3DS_FATAL_SMOKE
     Debug_Fatal("BOOT", "main", "deliberate fatal smoke test");
@@ -223,9 +241,6 @@ int main(void)
     }
 
     while (Platform_MainLoop()) {
-        unsigned long long elapsedMs;
-        unsigned long long rateMilliHz;
-
         PlatformTickScheduler_Update(&tickScheduler);
         PlatformInput_Update(&input);
         if (input.pressed != 0) {
@@ -261,16 +276,12 @@ int main(void)
         }
 #endif
 
-        consoleSelect(&topConsole);
-        printf("\x1b[11;8HLast: %-10s", lastInput);
-        printf("\x1b[12;8HTouch: %3u,%3u %-4s", input.touchX, input.touchY,
-            input.touchHeld ? "DOWN" : "UP");
-        elapsedMs = tickScheduler.elapsedNs / 1000000ULL;
-        rateMilliHz = elapsedMs == 0 ? 0 : tickScheduler.tickCount * 1000000ULL / elapsedMs;
-        printf("\x1b[17;4HTicks: %10llu", tickScheduler.tickCount);
-        printf("\x1b[18;4HCadence: %2llu.%03llu Hz", rateMilliHz / 1000ULL,
-            rateMilliHz % 1000ULL);
+        PlatformGraphics_BeginFrame();
+        RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler);
         Debug_Render(frame, lastInput, tickScheduler.tickCount, tickScheduler.elapsedNs);
+#if !PORT3DS_DEBUG_OVERLAY
+        PlatformGraphics_BeginScreen(PLATFORM_SCREEN_BOTTOM);
+#endif
         Platform_WaitForFrame();
         frame++;
 

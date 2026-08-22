@@ -6,16 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "platform/graphics.h"
 #include "platform/platform.h"
 
 static char sLines[DEBUG_LOG_LINES][DEBUG_LOG_LINE_LENGTH];
 static unsigned int sNextLine;
 static unsigned int sLineCount;
 static bool sOverlayEnabled;
-
-#if PORT3DS_DEBUG_OVERLAY
-static PrintConsole sBottomConsole;
-#endif
 
 static void Debug_Write(const char *level, const char *format, va_list args)
 {
@@ -39,7 +36,6 @@ void Debug_Init(void)
     sNextLine = 0;
     sLineCount = 0;
 #if PORT3DS_DEBUG_OVERLAY
-    consoleInit(GFX_BOTTOM, &sBottomConsole);
     sOverlayEnabled = true;
 #else
     sOverlayEnabled = false;
@@ -86,19 +82,27 @@ _Noreturn void Debug_Fatal(const char *subsystem, const char *function, const ch
     Debug_Error("FATAL %s/%s: %s", subsystem, function, error);
 
 #if PORT3DS_DEBUG_OVERLAY
-    consoleSelect(&sBottomConsole);
-    consoleClear();
-    printf("\x1b[31;1mFATAL ERROR\x1b[0m\n\n");
-    printf("Subsystem: %s\nFunction: %s\nError: %s\n\n", subsystem, function, error);
-    printf("Press START to exit.\n");
     while (aptMainLoop()) {
         hidScanInput();
         if (hidKeysDown() & KEY_START) {
             break;
         }
-        gfxFlushBuffers();
-        gfxSwapBuffers();
-        gspWaitForVBlank();
+        PlatformGraphics_BeginFrame();
+        PlatformGraphics_BeginScreen(PLATFORM_SCREEN_TOP);
+        PlatformGraphics_DrawText(116.0f, 96.0f, 0.65f, PLATFORM_RGBA(255, 100, 100, 255),
+            "FATAL ERROR");
+        PlatformGraphics_BeginScreen(PLATFORM_SCREEN_BOTTOM);
+        PlatformGraphics_DrawText(12.0f, 18.0f, 0.65f, PLATFORM_RGBA(255, 100, 100, 255),
+            "FATAL ERROR");
+        PlatformGraphics_DrawText(12.0f, 55.0f, 0.45f, PLATFORM_RGBA(255, 255, 255, 255),
+            "Subsystem: %s", subsystem);
+        PlatformGraphics_DrawText(12.0f, 74.0f, 0.45f, PLATFORM_RGBA(255, 255, 255, 255),
+            "Function: %s", function);
+        PlatformGraphics_DrawText(12.0f, 93.0f, 0.4f, PLATFORM_RGBA(255, 220, 220, 255),
+            "Error: %.80s", error);
+        PlatformGraphics_DrawText(12.0f, 190.0f, 0.45f, PLATFORM_RGBA(255, 255, 255, 255),
+            "Press START to exit.");
+        Platform_WaitForFrame();
     }
 #endif
 
@@ -109,11 +113,7 @@ _Noreturn void Debug_Fatal(const char *subsystem, const char *function, const ch
 void Debug_SetOverlayEnabled(bool enabled)
 {
 #if PORT3DS_DEBUG_OVERLAY
-    if (sOverlayEnabled != enabled) {
-        consoleSelect(&sBottomConsole);
-        consoleClear();
-        sOverlayEnabled = enabled;
-    }
+    sOverlayEnabled = enabled;
 #else
     (void)enabled;
 #endif
@@ -128,7 +128,7 @@ void Debug_Render(unsigned long long frame, const char *lastInput,
     unsigned long long gameTicks, unsigned long long elapsedNs)
 {
 #if PORT3DS_DEBUG_OVERLAY
-    const unsigned int visibleLines = 17;
+    const unsigned int visibleLines = 14;
     unsigned long long elapsedMs = elapsedNs / 1000000ULL;
     unsigned long long rateMilliHz = elapsedMs == 0 ? 0 : gameTicks * 1000000ULL / elapsedMs;
     unsigned int count;
@@ -138,18 +138,23 @@ void Debug_Render(unsigned long long frame, const char *lastInput,
         return;
     }
 
-    consoleSelect(&sBottomConsole);
-    printf("\x1b[1;1H\x1b[36;1mPOKEPLATINUM 3DS DEBUG\x1b[0m");
-    printf("\x1b[2;1HMilestone: BOOT-01  Frame: %-10llu", frame);
-    printf("\x1b[3;1HLast input: %-24s", lastInput);
-    printf("\x1b[4;1HTicks: %-10llu Rate: %llu.%03llu Hz", gameTicks,
+    PlatformGraphics_BeginScreen(PLATFORM_SCREEN_BOTTOM);
+    PlatformGraphics_DrawText(8.0f, 5.0f, 0.48f, PLATFORM_RGBA(105, 230, 255, 255),
+        "POKEPLATINUM 3DS DEBUG");
+    PlatformGraphics_DrawText(8.0f, 22.0f, 0.36f, PLATFORM_RGBA(255, 255, 255, 255),
+        "Milestone: BOOT-01  Frame: %llu", frame);
+    PlatformGraphics_DrawText(8.0f, 35.0f, 0.36f, PLATFORM_RGBA(255, 255, 255, 255),
+        "Last input: %s", lastInput);
+    PlatformGraphics_DrawText(8.0f, 48.0f, 0.36f, PLATFORM_RGBA(255, 255, 255, 255),
+        "Ticks: %llu  Rate: %llu.%03llu Hz", gameTicks,
         rateMilliHz / 1000ULL, rateMilliHz % 1000ULL);
 
     count = sLineCount < visibleLines ? sLineCount : visibleLines;
     start = (sNextLine + DEBUG_LOG_LINES - count) % DEBUG_LOG_LINES;
     for (unsigned int i = 0; i < visibleLines; i++) {
         const char *line = i < count ? sLines[(start + i) % DEBUG_LOG_LINES] : "";
-        printf("\x1b[%u;1H%-40.40s", i + 6, line);
+        PlatformGraphics_DrawText(8.0f, 68.0f + i * 11.5f, 0.32f,
+            PLATFORM_RGBA(240, 225, 235, 255), "%.45s", line);
     }
 #else
     (void)frame;

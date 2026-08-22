@@ -90,11 +90,13 @@ endif
 
 export NINJA_STATUS := [%p %f/%t] 
 
+FATAL_SMOKE ?= 0
+
 # Modders can delete the `check` dependency here after their first build.
 all: release check
 
 3ds:
-	$(MAKE) -f platform/3ds/Makefile DEBUG=$(DEBUG)
+	$(MAKE) -f platform/3ds/Makefile DEBUG=$(DEBUG) FATAL_SMOKE=$(FATAL_SMOKE)
 
 clean-3ds:
 	$(MAKE) -f platform/3ds/Makefile clean

@@ -73,8 +73,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 - [x] Parse a real NARC through `PlatformFile`.
   - Verify: list member count and sizes for a selected archive in the debug overlay.
   - Result: the portable bounds-checked parser opened generated `evo.narc`; isolated Azahar reported 508 members, representative sizes `44/44/44`, and `NARC PARSE OK`.
-- [ ] Initialize Citro2D/Citro3D render targets.
+- [x] Initialize Citro2D/Citro3D render targets.
   - Verify: top and bottom screens display distinct test colors and overlay reports `GPU OK`.
+  - Result: isolated Azahar displayed a navy top target and plum bottom target at 60 FPS, with the Citro2D debug overlay reporting `GPU OK`; debug, release, and fatal-screen paths all rendered through the GPU backend.
 - [ ] Present logical 256x192 top and bottom surfaces.
   - Verify: a pixel-grid test scales to 320x240 with the top image centered in 400x240.
 - [ ] Render a test texture, four sprites, and alpha blending.

@@ -3,15 +3,18 @@
 #include <3ds.h>
 
 #include "platform/debug.h"
+#include "platform/graphics.h"
 #include "platform/memory.h"
 #include "platform/save.h"
 
 static bool sRomfsMounted;
 static bool sSaveReady;
+static bool sGraphicsReady;
 
 bool Platform_Init(void)
 {
     gfxInitDefault();
+    sGraphicsReady = PlatformGraphics_Init();
     sRomfsMounted = R_SUCCEEDED(romfsInit());
     Debug_Init();
     PlatformHeap_Init();
@@ -22,13 +25,18 @@ bool Platform_Init(void)
     } else {
         Debug_Error("ROMFS mount failed");
     }
+    if (sGraphicsReady) {
+        Debug_Log("GPU OK");
+    } else {
+        Debug_Error("GPU init failed");
+    }
     if (sSaveReady) {
         Debug_Log("SAVE STORAGE OK");
     } else {
         Debug_Error("Save storage init failed");
     }
 
-    return sRomfsMounted && sSaveReady;
+    return sGraphicsReady && sRomfsMounted && sSaveReady;
 }
 
 void Platform_Shutdown(void)
@@ -41,6 +49,7 @@ void Platform_Shutdown(void)
     if (sRomfsMounted) {
         romfsExit();
     }
+    PlatformGraphics_Shutdown();
     gfxExit();
 }
 
@@ -51,7 +60,11 @@ bool Platform_MainLoop(void)
 
 void Platform_WaitForFrame(void)
 {
-    gfxFlushBuffers();
-    gfxSwapBuffers();
-    gspWaitForVBlank();
+    if (sGraphicsReady) {
+        PlatformGraphics_EndFrame();
+    } else {
+        gfxFlushBuffers();
+        gfxSwapBuffers();
+        gspWaitForVBlank();
+    }
 }

@@ -31,7 +31,7 @@ CFLAGS := -g -Wall -Wextra -Werror -O2 -mword-relocations -ffunction-sections $(
 CFLAGS += $(INCLUDE) -D__3DS__ -std=c11 -DPORT3DS_DEBUG=$(DEBUG) -DPORT3DS_DEBUG_OVERLAY=$(DEBUG)
 CFLAGS += -DPORT3DS_FATAL_SMOKE=$(FATAL_SMOKE)
 LDFLAGS := -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
-LIBS := -lctru -lm
+LIBS := -lcitro2d -lcitro3d -lctru -lm
 LIBDIRS := $(CTRULIB)
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
@@ -47,7 +47,7 @@ export APP_AUTHOR := pret contributors
 export _3DSXDEPS := $(OUTPUT).smdh
 export _3DSXFLAGS := --smdh=$(OUTPUT).smdh --romfs=$(ROMFS)
 
-CFILES := main_3ds.c platform_3ds.c input_3ds.c filesystem_3ds.c debug_3ds.c time_3ds.c save_3ds.c memory.c archive.c
+CFILES := main_3ds.c platform_3ds.c input_3ds.c filesystem_3ds.c debug_3ds.c time_3ds.c save_3ds.c graphics_3ds.c memory.c archive.c
 export OFILES := $(CFILES:.c=.o)
 export LD := $(CC)
 export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
