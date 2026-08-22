@@ -1,8 +1,10 @@
 # Keep this list in alphabetical order for ease of reference.
 .PHONY:           \
+	3ds           \
 	all           \
 	check         \
 	clean         \
+	clean-3ds     \
 	configure     \
 	distclean     \
 	debug         \
@@ -20,6 +22,7 @@
 	update
 
 ROM_REVISION ?= 1
+DEBUG ?= 1
 
 SUBPROJ_DIR := subprojects
 
@@ -89,6 +92,12 @@ export NINJA_STATUS := [%p %f/%t]
 
 # Modders can delete the `check` dependency here after their first build.
 all: release check
+
+3ds:
+	$(MAKE) -f platform/3ds/Makefile DEBUG=$(DEBUG)
+
+clean-3ds:
+	$(MAKE) -f platform/3ds/Makefile clean
 
 .NOTPARALLEL: release
 release: setup_release rom
