@@ -75,6 +75,8 @@ VRAM banks, OAM addresses, GX/G2 registers, HBlank writes, and DS texture proxie
 
 The native presentation base owns Citro3D and Citro2D initialization, one render target for each physical screen, frame submission, and a bounded GPU text buffer. Bootstrap and fatal diagnostics use the same GPU path instead of mixing software consoles with Citro3D framebuffers. Each screen also owns a row-major `256x192` RGBA logical surface; the backend converts it to PICA tiled texture layout and presents it nearest-filtered at `320x240`. The top image is centered at physical x=40 while the bottom image fills its 320-pixel width. Game render commands remain a separate follow-up layer.
 
+The bootstrap sprite smoke uses a procedural RGBA texture to exercise tiled uploads, repeated image submission, independent position/scale/rotation, source transparency, and per-instance alpha blending. It is test content only; Platinum texture/palette decoding remains the next asset-layer boundary.
+
 ## Audio
 
 High-level music/SFX/cry policy remains game logic. NNS Sound and ARM7 services are replaced behind an audio backend. NDSP does not consume SDAT directly, so sequence/bank playback requires either a maintained decoder or an automated build-time conversion; manual per-asset conversion is prohibited.

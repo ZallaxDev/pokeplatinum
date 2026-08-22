@@ -220,7 +220,9 @@ static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *
         "Ticks: %llu", tickScheduler->tickCount);
     PlatformGraphics_DrawText(52.0f, 157.0f, 0.42f, PLATFORM_RGBA(255, 255, 255, 255),
         "Cadence: %llu.%03llu Hz", rateMilliHz / 1000ULL, rateMilliHz % 1000ULL);
-    PlatformGraphics_DrawText(52.0f, 194.0f, 0.38f, PLATFORM_RGBA(180, 200, 220, 255),
+    PlatformGraphics_DrawText(128.0f, 215.0f, 0.34f, PLATFORM_RGBA(190, 215, 235, 255),
+        "SPRITES: 4   ALPHA: #4");
+    PlatformGraphics_DrawText(83.0f, 228.0f, 0.28f, PLATFORM_RGBA(180, 200, 220, 255),
 #if PORT3DS_DEBUG_OVERLAY
         "START exits  |  L+R+SELECT toggles debug");
 #else
@@ -246,6 +248,10 @@ int main(void)
         Debug_Log("SURFACE TEST OK");
     } else {
         Debug_Error("SURFACE TEST FAILED");
+    }
+    if (platformReady) {
+        Debug_Log("SPRITE TEST 4 + ALPHA");
+        Debug_Log("SPRITE TEST OK");
     }
 
 #if PORT3DS_FATAL_SMOKE
@@ -318,6 +324,7 @@ int main(void)
 
         PlatformGraphics_BeginFrame();
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_TOP);
+        PlatformGraphics_DrawSpriteTest();
         RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler);
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_BOTTOM);
         Debug_Render(frame, lastInput, tickScheduler.tickCount, tickScheduler.elapsedNs);

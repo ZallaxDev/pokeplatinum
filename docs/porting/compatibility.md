@@ -16,4 +16,5 @@
 | Portable NARC parser | Pass | BOOT-01 debug `b9889e5c...72adb3` | 508 members; sampled sizes `44/44/44`; `NARC PARSE OK` | Validates all member ranges |
 | Citro2D/Citro3D targets | Pass | BOOT-01 debug `6f44ded2...198b8e` | Distinct navy/plum targets at 60 FPS; overlay reports `GPU OK` | Debug, release, and fatal diagnostics use GPU text |
 | Logical screen surfaces | Pass | BOOT-01 debug `33ac2372...006adb` | `256x192` pixel grids scale nearest to `320x240`; top centered at x=40 | Overlay reports `SURFACE TEST OK` |
+| Texture and sprite submission | Pass | BOOT-01 debug `7cb13497...b4074f` | Four procedural RGBA sprites render with independent transforms; fourth blends at 45% alpha | Overlay reports `SPRITE TEST OK` |
 | Gameplay | Not started | - | - | NDS runtime not linked yet |

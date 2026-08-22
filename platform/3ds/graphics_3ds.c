@@ -11,6 +11,7 @@
 #define LOGICAL_TEXTURE_SIZE 256
 #define LOGICAL_SCALE 1.25f
 #define TOP_LOGICAL_X 40.0f
+#define SPRITE_TEXTURE_SIZE 32
 
 typedef struct LogicalSurface {
     C3D_Tex texture;
@@ -24,6 +25,10 @@ static C3D_RenderTarget *sTopTarget;
 static C3D_RenderTarget *sBottomTarget;
 static C2D_TextBuf sTextBuffer;
 static LogicalSurface sLogicalSurfaces[2];
+static C3D_Tex sSpriteTexture;
+static Tex3DS_SubTexture sSpriteSubtexture;
+static C2D_Image sSpriteImage;
+static bool sSpriteTextureReady;
 static bool sReady;
 static bool sFrameActive;
 
@@ -33,6 +38,58 @@ static unsigned int MortonOffset(unsigned int x, unsigned int y)
     return (x & 1u) | ((y & 1u) << 1)
         | ((x & 2u) << 1) | ((y & 2u) << 2)
         | ((x & 4u) << 2) | ((y & 4u) << 3);
+}
+
+static unsigned int TiledOffset(unsigned int textureWidth, unsigned int x, unsigned int y)
+{
+    unsigned int tile = (y / 8) * (textureWidth / 8) + x / 8;
+    return tile * 64 + MortonOffset(x & 7, y & 7);
+}
+
+static bool InitSpriteTexture(void)
+{
+    uint32_t *pixels;
+
+    if (!C3D_TexInit(&sSpriteTexture, SPRITE_TEXTURE_SIZE, SPRITE_TEXTURE_SIZE, GPU_RGBA8)) {
+        return false;
+    }
+    sSpriteTextureReady = true;
+    C3D_TexSetFilter(&sSpriteTexture, GPU_NEAREST, GPU_NEAREST);
+    C3D_TexSetWrap(&sSpriteTexture, GPU_CLAMP_TO_EDGE, GPU_CLAMP_TO_EDGE);
+    pixels = sSpriteTexture.data;
+    for (unsigned int y = 0; y < SPRITE_TEXTURE_SIZE; y++) {
+        for (unsigned int x = 0; x < SPRITE_TEXTURE_SIZE; x++) {
+            unsigned int distance = (x > 15 ? x - 15 : 15 - x)
+                + (y > 15 ? y - 15 : 15 - y);
+            uint32_t color = PLATFORM_RGBA(0, 0, 0, 0);
+
+            if (distance <= 14) {
+                bool checker = ((x / 4) + (y / 4)) & 1;
+                color = checker
+                    ? PLATFORM_RGBA(255, 208, 70, 255)
+                    : PLATFORM_RGBA(70, 210, 255, 255);
+                if (distance >= 12) {
+                    color = PLATFORM_RGBA(255, 90, 180, 255);
+                }
+            }
+            pixels[TiledOffset(SPRITE_TEXTURE_SIZE, x, y)] = color;
+        }
+    }
+    C3D_TexFlush(&sSpriteTexture);
+
+    sSpriteSubtexture = (Tex3DS_SubTexture) {
+        .width = SPRITE_TEXTURE_SIZE,
+        .height = SPRITE_TEXTURE_SIZE,
+        .left = 0.0f,
+        .top = 1.0f,
+        .right = 1.0f,
+        .bottom = 0.0f,
+    };
+    sSpriteImage = (C2D_Image) {
+        .tex = &sSpriteTexture,
+        .subtex = &sSpriteSubtexture,
+    };
+    return true;
 }
 
 static bool InitLogicalSurface(LogicalSurface *surface)
@@ -73,7 +130,12 @@ bool PlatformGraphics_Init(void)
     sTextBuffer = C2D_TextBufNew(GRAPHICS_TEXT_GLYPHS);
     if (sTopTarget == NULL || sBottomTarget == NULL || sTextBuffer == NULL
         || !InitLogicalSurface(&sLogicalSurfaces[PLATFORM_SCREEN_TOP])
-        || !InitLogicalSurface(&sLogicalSurfaces[PLATFORM_SCREEN_BOTTOM])) {
+        || !InitLogicalSurface(&sLogicalSurfaces[PLATFORM_SCREEN_BOTTOM])
+        || !InitSpriteTexture()) {
+        if (sSpriteTextureReady) {
+            C3D_TexDelete(&sSpriteTexture);
+            sSpriteTextureReady = false;
+        }
         for (unsigned int i = 0; i < 2; i++) {
             if (sLogicalSurfaces[i].textureReady) {
                 C3D_TexDelete(&sLogicalSurfaces[i].texture);
@@ -106,6 +168,8 @@ void PlatformGraphics_Shutdown(void)
         C3D_TexDelete(&sLogicalSurfaces[i].texture);
         sLogicalSurfaces[i].textureReady = false;
     }
+    C3D_TexDelete(&sSpriteTexture);
+    sSpriteTextureReady = false;
     C2D_TextBufDelete(sTextBuffer);
     C2D_Fini();
     C3D_Fini();
@@ -163,13 +227,31 @@ bool PlatformGraphics_UploadLogicalSurface(PlatformScreen screen)
     texturePixels = surface->texture.data;
     for (unsigned int y = 0; y < PLATFORM_LOGICAL_HEIGHT; y++) {
         for (unsigned int x = 0; x < PLATFORM_LOGICAL_WIDTH; x++) {
-            unsigned int tile = (y / 8) * (LOGICAL_TEXTURE_SIZE / 8) + x / 8;
-            unsigned int offset = tile * 64 + MortonOffset(x & 7, y & 7);
+            unsigned int offset = TiledOffset(LOGICAL_TEXTURE_SIZE, x, y);
             texturePixels[offset] = surface->pixels[y * PLATFORM_LOGICAL_WIDTH + x];
         }
     }
     C3D_TexFlush(&surface->texture);
     return true;
+}
+
+void PlatformGraphics_DrawSpriteTest(void)
+{
+    C2D_ImageTint alphaTint;
+
+    if (!sFrameActive || !sSpriteTextureReady) {
+        return;
+    }
+    PlatformGraphics_BeginScreen(PLATFORM_SCREEN_TOP);
+    C2D_DrawImageAt(sSpriteImage, 70.0f, 174.0f, 0.0f, NULL, 1.0f, 1.0f);
+    C2D_DrawImageAtRotated(sSpriteImage, 151.0f, 190.0f, 0.0f, 0.35f,
+        NULL, 0.8f, 0.8f);
+    C2D_DrawImageAtRotated(sSpriteImage, 236.0f, 188.0f, 0.0f, -0.22f,
+        NULL, 1.15f, 1.15f);
+    C2D_DrawRectSolid(292.0f, 173.0f, 0.0f, 40.0f, 36.0f,
+        C2D_Color32(235, 245, 255, 255));
+    C2D_AlphaImageTint(&alphaTint, 0.45f);
+    C2D_DrawImageAt(sSpriteImage, 296.0f, 175.0f, 0.0f, &alphaTint, 1.0f, 1.0f);
 }
 
 void PlatformGraphics_PresentLogicalSurface(PlatformScreen screen)

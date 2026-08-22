@@ -79,8 +79,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 - [x] Present logical 256x192 top and bottom surfaces.
   - Verify: a pixel-grid test scales to 320x240 with the top image centered in 400x240.
   - Result: nearest-filtered 16-pixel logical grid cells rendered as 20-pixel physical cells; isolated Azahar showed the 320x240 top surface at x=40..359, the bottom surface at x=0..319, and `SURFACE TEST OK` at 60 FPS.
-- [ ] Render a test texture, four sprites, and alpha blending.
+- [x] Render a test texture, four sprites, and alpha blending.
   - Verify: emulator shows the expected texture and four independently positioned sprites, one semitransparent.
+  - Result: isolated Azahar displayed four instances of a procedural tiled RGBA diamond with independent positions, scales, and rotations; the fourth rendered at 45% alpha over a white plate, and the overlay reported `SPRITE TEST OK` at 60 FPS.
 - [ ] Decode and render one real Platinum 2D asset.
   - Verify: a recognizable sprite is visible without palette or tile corruption.
 
