@@ -97,8 +97,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 - [x] Replace dynamic NDS overlays with statically linked application registration.
   - Verify: switch between two test applications and show their init/main/exit sequence in debug.
   - Result: statically linked ALPHA and BETA templates alternated every 60 main frames; isolated Azahar showed repeated `INIT/MAIN/EXIT` sequences and 10 switches after 626 game frames, while the host smoke verified `A(init/main/exit) -> B(init/main/exit)`.
-- [ ] Port RTC acquisition while preserving calendar calculations.
+- [x] Port RTC acquisition while preserving calendar calculations.
   - Verify: displayed date/time matches the 3DS system clock and a day rollover test passes.
+  - Result: isolated Azahar displayed `2026-08-22 20:10:36` against host time `20:10:40 CEST`; host and sanitizer smokes passed leap-day, month, and year rollovers.
 - [ ] Port game heap hierarchy and allocation direction semantics.
   - Verify: representative game allocations pass alignment and high/low allocation tests.
 - [ ] Disable unsupported communications through one explicit offline backend.

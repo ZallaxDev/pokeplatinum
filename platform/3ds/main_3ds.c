@@ -6,6 +6,7 @@
 #include "platform/debug.h"
 #include "platform/filesystem.h"
 #include "platform/game_application.h"
+#include "platform/game_clock.h"
 #include "platform/graphics.h"
 #include "platform/game_runtime.h"
 #include "platform/game_task.h"
@@ -425,7 +426,8 @@ static bool BuildLogicalGrid(PlatformScreen screen)
 
 static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *input,
     const char *lastInput, const PlatformTickScheduler *tickScheduler,
-    const GameRuntime *gameRuntime, const BootstrapGameState *gameState)
+    const GameRuntime *gameRuntime, const BootstrapGameState *gameState,
+    const GameClockDateTime *clock)
 {
     unsigned long long elapsedMs = tickScheduler->elapsedNs / 1000000ULL;
     unsigned long long rateMilliHz = elapsedMs == 0
@@ -452,6 +454,10 @@ static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *
         tickScheduler->tickCount);
     PlatformGraphics_DrawText(52.0f, 157.0f, 0.42f, PLATFORM_RGBA(255, 255, 255, 255),
         "Cadence: %llu.%03llu Hz", rateMilliHz / 1000ULL, rateMilliHz % 1000ULL);
+    PlatformGraphics_DrawText(52.0f, 173.0f, 0.38f, PLATFORM_RGBA(180, 240, 210, 255),
+        "RTC: %04u-%02u-%02u %02u:%02u:%02u",
+        clock->year, clock->month, clock->day,
+        clock->hour, clock->minute, clock->second);
     PlatformGraphics_DrawText(52.0f, 96.0f, 0.38f, PLATFORM_RGBA(180, 240, 210, 255),
         "M/B/P/A %llu/%llu/%llu/%llu %s",
         (unsigned long long)gameState->taskCounts[BOOTSTRAP_TASK_MAIN],
@@ -482,10 +488,20 @@ int main(void)
         .shutdown = BootstrapGame_Shutdown,
     };
     SaveSmokeRecord saveRecord;
+    GameClockDateTime clock = { 0 };
     unsigned long long frame = 0;
     size_t smokeSize = 0;
     const char *lastInput = "NONE";
     bool platformReady = Platform_Init();
+
+    if (platformReady && GameClock_Read(&clock)) {
+        Debug_Log("RTC %04u-%02u-%02u %02u:%02u:%02u", clock.year,
+            clock.month, clock.day, clock.hour, clock.minute, clock.second);
+        Debug_Log("RTC ACQUISITION OK");
+    } else {
+        Debug_Error("RTC ACQUISITION FAILED");
+        platformReady = false;
+    }
 
     if (BuildLogicalGrid(PLATFORM_SCREEN_TOP)
         && BuildLogicalGrid(PLATFORM_SCREEN_BOTTOM)) {
@@ -583,10 +599,13 @@ int main(void)
 #endif
 
         PlatformGraphics_BeginFrame();
+        if (!GameClock_Read(&clock)) {
+            Debug_Error("RTC UPDATE FAILED");
+        }
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_TOP);
         PlatformGraphics_DrawSpriteTest();
         RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler,
-            &gameRuntime, &gameState);
+            &gameRuntime, &gameState, &clock);
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_BOTTOM);
         Debug_Render(frame, lastInput, tickScheduler.tickCount, tickScheduler.elapsedNs);
         Platform_WaitForFrame();

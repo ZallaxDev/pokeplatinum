@@ -14,7 +14,7 @@ This inventory identifies replacement boundaries; it is not permission to replac
 | OS/timers | `src/timer.c`, `src/sys_task_manager.c` | monotonic time and task execution | libctru clock, portable scheduler, and fixed-capacity priority task queues |
 | FS/NitroFS | `src/system.c`, `src/narc.c` | file and archive reads | relative `PlatformFile` paths backed by RomFS |
 | CARD | `src/savedata.c` | backup flash reads/writes | transactional save file backend |
-| RTC | `src/rtc.c` | game clock and daily events | 3DS wall clock plus retained calendar logic |
+| RTC | `src/rtc.c` | game clock and daily events | implemented `osGetTime` backend plus portable 2000-2099 calendar; consumers pending |
 | Keypad/touch | `src/system.c`, `src/touch_pad.c`, `src/touch_screen.c` | digital input, calibrated touch, hit tests | libctru HID feeding existing logical input model |
 | Sound/microphone | `src/sound_system.c`, `src/sound_chatot.c` | SDAT playback and Chatot recording | NDSP pipeline; microphone deferred separately |
 | Wireless/WFC | `src/wireless_manager.c`, `src/communication_system.c`, `lib/gds`, `lib/ppwlobby` | local and online communications | explicit offline backend for first playable port |

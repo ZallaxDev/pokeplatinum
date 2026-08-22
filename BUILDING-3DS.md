@@ -81,3 +81,6 @@ Debug and release objects are isolated in `build-3ds-debug/` and `build-3ds-rele
 5. Touch the bottom screen and confirm logical coordinates stay inside 256x192.
 6. Press `L+R+SELECT` in the debug build and confirm the overlay hides and returns.
 7. Press START and confirm controlled exit.
+8. Confirm the top-screen `RTC` value matches the 3DS system date and time.
+
+`make check-3ds-host` also verifies leap-day, month, and year rollover using the portable calendar implementation.

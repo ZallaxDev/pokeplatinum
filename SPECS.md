@@ -85,7 +85,7 @@ High-level music/SFX/cry policy remains game logic. NNS Sound and ARM7 services 
 
 ## Time
 
-The platform uses the ARM11 system counter for monotonic nanoseconds. Logical game cadence is scheduled at the original DS rate of `59.8261 Hz` with a rational accumulator, without binding simulation to physical presentation. Frame synchronization remains a separate VBlank operation. Wall clock and delay APIs will be added when their first consumers are ported. Direct NDS timer registers and IRQs are not retained.
+The platform uses the ARM11 system counter for monotonic nanoseconds. Logical game cadence is scheduled at the original DS rate of `59.8261 Hz` with a rational accumulator, without binding simulation to physical presentation. Frame synchronization remains a separate VBlank operation. Wall-clock acquisition uses libctru `osGetTime`; portable calendar code converts its 1900 epoch to Platinum's 2000 epoch over the original 2000-2099 range and retains Gregorian leap-year, day-of-year, and Sunday-based week-day calculations. Direct NDS timer registers, RTC IPC, and IRQs are not retained.
 
 ## Save
 

@@ -16,7 +16,7 @@ Classification describes logic reuse, not whether a file currently compiles with
 | Input polling/calibration | hardware-dependent | `src/system.c`, `src/touch_pad.c` | libctru HID backend |
 | Entry point/frame/interrupts | hardware-dependent | `src/main.c`, `src/system.c` | 3DS lifecycle and fixed logical scheduler |
 | Timer | hardware-dependent | `src/timer.c` | monotonic platform clock |
-| RTC | mixed | `src/rtc.c` | retain calculations, replace acquisition |
+| RTC | mixed | `src/rtc.c` | portable calendar and 3DS acquisition implemented; connect original consumers |
 | Files and NARC | mixed | `src/system.c`, `src/narc.c` | portable stream API under NARC parser |
 | BG/windows | mixed | `src/bg_window.c` | retain CPU state, replace GX/G2 submission |
 | Graphics resource loading | mixed | `src/graphics.c` | retain formats, replace NNS parsing/upload as needed |

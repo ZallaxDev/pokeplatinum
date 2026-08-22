@@ -21,4 +21,5 @@
 | Game lifecycle boundary | Pass | BOOT-01 debug `e752fe7e...36034d` | Host smoke: init=1, frames=120, shutdown=1; Azahar game frames track ticks | Gameplay hook bodies not connected yet |
 | Portable task manager | Pass | BOOT-01 debug `b2c73f62...cd2a7b` | Main/boundary/print/after counters remain equal and ordered; host mutation smoke passes | Fixed capacity; game tasks not connected yet |
 | Static application registry | Pass | BOOT-01 debug `283692d4...2257a6` | ALPHA/BETA alternate with visible init/main/exit sequence; host sequence smoke passes | Real application templates not registered yet |
+| RTC and calendar | Pass | BOOT-01 debug `8f98d553...c6a8ab` | Azahar clock matched host within 4 seconds; host rollover and sanitizer smokes pass | Supports Platinum's 2000-2099 RTC range |
 | Gameplay | Not started | - | - | NDS runtime not linked yet |
