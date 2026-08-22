@@ -83,7 +83,7 @@ The platform uses the ARM11 system counter for monotonic nanoseconds. Logical ga
 
 ## Save
 
-Original save structures, checksums, block counters, and recovery semantics are retained when practical. Physical CARD flash access is replaced by a file-backed 3DS backend. Writes must be transactional and preserve the previous valid image if the application exits during a save.
+Original save structures, checksums, block counters, and recovery semantics are retained when practical. Physical CARD flash access is replaced by a file-backed 3DS backend rooted at `sdmc:/3ds/pokeplatinum`. Writes are staged and synchronized to a temporary file, then replace the destination through a recoverable backup transaction. Startup reads restore the backup if interruption occurred during replacement and ignore an uncommitted temporary file, preserving the previous valid image.
 
 ## Memory
 

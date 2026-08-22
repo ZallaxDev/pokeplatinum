@@ -61,8 +61,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 - [x] Add a portable heap backend.
   - Verify: allocate, align, write, read, and free from representative heap IDs; overlay reports `HEAP TEST OK`.
   - Result: isolated Azahar displayed `HEAP TEST OK` after exercising SYSTEM, DEBUG, and APPLICATION heaps with 8-, 32-, and 64-byte alignment, data patterns, ownership metadata, counters, free, and destroy.
-- [ ] Add file-backed save storage with atomic replacement.
+- [x] Add file-backed save storage with atomic replacement.
   - Verify: write a test value, restart the `.3dsx`, and recover the same value after a forced interruption test.
+  - Result: after staging `eca86420` and forcibly stopping Azahar, restart retained `13579bdf` and reported the staged data ignored; an atomic commit followed by another restart recovered `eca86420`.
 
 ## Phase 3 - Asset And Renderer Bootstrap
 

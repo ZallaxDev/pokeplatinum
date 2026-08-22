@@ -7,7 +7,18 @@
 #include "platform/input.h"
 #include "platform/memory.h"
 #include "platform/platform.h"
+#include "platform/save.h"
 #include "platform/time.h"
+
+#define SAVE_SMOKE_PATH "port3ds-atomic-smoke.bin"
+#define SAVE_SMOKE_MAGIC 0x50543344u
+#define SAVE_SMOKE_INITIAL_VALUE 0x13579BDFu
+
+typedef struct SaveSmokeRecord {
+    uint32_t magic;
+    uint32_t value;
+    uint32_t checksum;
+} SaveSmokeRecord;
 
 static const char *DescribeInput(uint32_t keys)
 {
@@ -79,11 +90,33 @@ static bool RunHeapSmokeTest(void)
     return passed;
 }
 
+static SaveSmokeRecord MakeSaveSmokeRecord(uint32_t value)
+{
+    SaveSmokeRecord record = {
+        .magic = SAVE_SMOKE_MAGIC,
+        .value = value,
+        .checksum = SAVE_SMOKE_MAGIC ^ value ^ 0xFFFFFFFFu,
+    };
+    return record;
+}
+
+static bool LoadSaveSmokeRecord(SaveSmokeRecord *record)
+{
+    if (PlatformSave_Read(SAVE_SMOKE_PATH, record, sizeof(*record))) {
+        return record->magic == SAVE_SMOKE_MAGIC
+            && record->checksum == (record->magic ^ record->value ^ 0xFFFFFFFFu);
+    }
+
+    *record = MakeSaveSmokeRecord(SAVE_SMOKE_INITIAL_VALUE);
+    return PlatformSave_WriteAtomic(SAVE_SMOKE_PATH, record, sizeof(*record));
+}
+
 int main(void)
 {
     static unsigned char smokeData[256];
     PlatformInputState input = { 0 };
     PlatformTickScheduler tickScheduler;
+    SaveSmokeRecord saveRecord;
     PrintConsole topConsole;
     unsigned long long frame = 0;
     size_t smokeSize = 0;
@@ -123,6 +156,14 @@ int main(void)
     } else {
         Debug_Error("HEAP TEST FAILED");
     }
+    if (LoadSaveSmokeRecord(&saveRecord)) {
+        Debug_Log("SAVE VALUE %08lx", (unsigned long)saveRecord.value);
+        if (PlatformSave_HasStagedWrite(SAVE_SMOKE_PATH)) {
+            Debug_Log("SAVE STAGED DATA IGNORED");
+        }
+    } else {
+        Debug_Error("SAVE TEST FAILED");
+    }
 
     while (Platform_MainLoop()) {
         unsigned long long elapsedMs;
@@ -137,6 +178,23 @@ int main(void)
         if (input.touchPressed) {
             Debug_Log("Touch %u,%u", input.touchX, input.touchY);
             lastInput = "TOUCH";
+        }
+        if (input.pressed & GAME_KEY_X) {
+            SaveSmokeRecord candidate = MakeSaveSmokeRecord(saveRecord.value ^ 0xFFFFFFFFu);
+            if (PlatformSave_Stage(SAVE_SMOKE_PATH, &candidate, sizeof(candidate))) {
+                Debug_Log("SAVE STAGED %08lx", (unsigned long)candidate.value);
+            } else {
+                Debug_Error("SAVE STAGE FAILED");
+            }
+        }
+        if (input.pressed & GAME_KEY_Y) {
+            SaveSmokeRecord candidate = MakeSaveSmokeRecord(saveRecord.value ^ 0xFFFFFFFFu);
+            if (PlatformSave_WriteAtomic(SAVE_SMOKE_PATH, &candidate, sizeof(candidate))) {
+                saveRecord = candidate;
+                Debug_Log("SAVE COMMIT %08lx", (unsigned long)saveRecord.value);
+            } else {
+                Debug_Error("SAVE COMMIT FAILED");
+            }
         }
 
 #if PORT3DS_DEBUG_OVERLAY

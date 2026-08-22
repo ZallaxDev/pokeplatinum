@@ -11,4 +11,5 @@
 | RomFS | Pass | BOOT-01 debug `c2cb53d...c83c4bf` | `ROMFS OK`; size 53; FNV-1a `9cd859d0` | `port3ds-smoke.txt` only |
 | Monotonic game ticks | Pass | BOOT-01 debug `7e4a3cf...aed5c6` | 37,243 ticks at 59.825 Hz after about 622.5 seconds | Target 59.8261 Hz; 37,246 presentation frames |
 | Portable heap base | Pass | BOOT-01 debug `ecf0ea22...08e8a3` | Overlay reports `HEAP TEST OK` for three IDs and alignments | Game hierarchy/direction not connected yet |
+| Transactional save base | Pass | BOOT-01 debug `086ac4d8...8c3b9f6` | Interrupted stage retained old value; committed value survived restart | Smoke record only; game serializer not connected |
 | Gameplay | Not started | - | - | NDS runtime not linked yet |
