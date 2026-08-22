@@ -44,11 +44,21 @@ ported. Its shared header only has GCC portability fixes for an ineffective
 scalar `const` qualifier and a typed overlay sentinel; behavior and layout are
 unchanged.
 
+`src/heap.c` now owns heap IDs, parent/child creation, low/high allocation,
+allocation headers, counters, and destruction. ARM builds use the original
+NitroSystem FND exp-heap, list, heap-common, and allocator sources. The native
+adapter only supplies process-lifetime arena memory and single-threaded OS
+locking. Host tests use an FND shim because the SDK's pointer arithmetic is
+intentionally 32-bit.
+
 The original NARC reader opens generated resources through a minimal Nitro
 `FSFile` compatibility surface backed by standard native files. The 3DS build
 mounts `titledemo.narc` at its original NitroFS path,
 `demo/title/titledemo.narc`, and verifies archive metadata plus whole and
 partial member reads. Resource paths remain owned by `src/narc.c`.
+The RomFS adapter also carries forward the previous branch's bounded path
+joining, rejecting absolute paths, traversal, backslashes, and alternate
+roots.
 
 `src/rtc.c` retains the game's cached date/time state, ten-frame polling
 interval, time-of-day policy, and elapsed-time behavior. The native transport
@@ -60,3 +70,14 @@ The next runtime slice is the original heap implementation or another
 boot-path subsystem that can be isolated cleanly. The long-term entry path
 remains `src/main.c:NitroMain`; reaching it requires adapters for the Nitro OS,
 input, sound, graphics, save-device, and remaining overlay boundaries.
+
+## Reuse from `3ds-port`
+
+Useful platform work from the experimental branch is imported selectively,
+never by cherry-picking its replacement runtime. Current reuse includes build
+and RomFS staging patterns, bounded filesystem paths, heap test scenarios, and
+Azahar verification. The Citro2D/Citro3D surface backend, HID conversion,
+monotonic tick conversion, transactional save writes, and bounded Nitro 2D/3D
+resource decoders remain candidates to place beneath original Nitro/NNS/CARD
+interfaces. Replacement frontend, task, application, field, script, movement,
+checkpoint, NARC, heap, and RTC implementations are not reusable runtime code.

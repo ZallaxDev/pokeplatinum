@@ -54,20 +54,79 @@ u32 RuntimeAdapters_GetRTCReadCount(void)
     return sRTCReadCount;
 }
 
-void *Heap_Alloc(u32 heapID, u32 size)
+static void *ArenaAlloc(u32 size, u32 alignment)
 {
-    (void)heapID;
+    uintptr_t raw = (uintptr_t)malloc(size + alignment - 1);
+
+    if (raw == 0) {
+        return NULL;
+    }
+    return (void *)((raw + alignment - 1) & ~(uintptr_t)(alignment - 1));
+}
+
+void *OS_AllocFromMainArenaLo(u32 size, u32 alignment)
+{
+    return ArenaAlloc(size, alignment);
+}
+
+void *OS_AllocFromMainExArenaHi(u32 size, u32 alignment)
+{
+    return ArenaAlloc(size, alignment);
+}
+
+void *OS_AllocFromHeap(OSArenaId arena, OSHeapHandle heap, u32 size)
+{
+    (void)arena;
+    (void)heap;
     return malloc(size);
 }
 
-void *Heap_AllocAtEnd(u32 heapID, u32 size)
+void OS_FreeToHeap(OSArenaId arena, OSHeapHandle heap, void *ptr)
 {
-    return Heap_Alloc(heapID, size);
+    (void)arena;
+    (void)heap;
+    free(ptr);
 }
 
-void Heap_Free(void *ptr)
+OSProcMode OS_GetProcMode(void)
 {
-    free(ptr);
+    return OS_PROCMODE_USER;
+}
+
+OSIntrMode OS_DisableInterrupts(void)
+{
+    return 0;
+}
+
+void OS_RestoreInterrupts(OSIntrMode mode)
+{
+    (void)mode;
+}
+
+int OS_Printf(const char *format, ...)
+{
+    (void)format;
+    return 0;
+}
+
+void MI_CpuFill32(void *dest, u32 value, u32 size)
+{
+    u32 *words = dest;
+
+    while (size >= sizeof(*words)) {
+        *words++ = value;
+        size -= sizeof(*words);
+    }
+}
+
+BOOL CommManager_IsInitialized(void)
+{
+    return FALSE;
+}
+
+void ErrorMessageReset_PrintErrorAndReset(void)
+{
+    ErrorHandling_AssertFail();
 }
 
 BOOL Overlay_LoadByID(const FSOverlayID overlayID, enum OverlayLoadType loadType)
@@ -102,11 +161,31 @@ void FS_InitFile(FSFile *file)
     file->handle = NULL;
 }
 
+static BOOL IsValidResourcePath(const char *path)
+{
+    if (path == NULL || path[0] == '\0' || path[0] == '/') {
+        return FALSE;
+    }
+
+    for (const char *part = path; *part != '\0'; part++) {
+        if (*part == '\\' || *part == ':') {
+            return FALSE;
+        }
+        if (part[0] == '.' && part[1] == '.'
+            && (part == path || part[-1] == '/')
+            && (part[2] == '\0' || part[2] == '/')) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 BOOL FS_OpenFile(FSFile *file, const char *path)
 {
     char nativePath[512];
 
-    if (snprintf(nativePath, sizeof(nativePath), "%s%s", sFileRoot, path) >= (int)sizeof(nativePath)) {
+    if (!IsValidResourcePath(path)
+        || snprintf(nativePath, sizeof(nativePath), "%s%s", sFileRoot, path) >= (int)sizeof(nativePath)) {
         return FALSE;
     }
 

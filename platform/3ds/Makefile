@@ -13,12 +13,14 @@ SOURCES := platform/3ds src
 INCLUDES := platform/3ds/include platform/3ds include build
 HOSTCC ?= cc
 NITROSDK_DIR := subprojects/NitroSDK-4.2.30001
+NITROSYSTEM_DIR := subprojects/NitroSystem-071126.1
 NARC_SOURCE := build/res/graphics/title_screen/titledemo.narc
 ROMFS_ROOT := $(BUILD)/romfs
 NARC_ROMFS := $(ROMFS_ROOT)/demo/title/titledemo.narc
 
 ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
-COMMON_FLAGS := -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
+COMMON_FLAGS := -Wall -Wextra -Werror -Wno-multichar \
+	-ffunction-sections -fdata-sections -DNNS_FINALROM \
 	-fsigned-char -std=c11 -DPOKEPLATINUM_GENERATED_ENUM \
 	-include pokeplatinum_compat.h
 CFLAGS := -g -O2 -mword-relocations $(ARCH) $(COMMON_FLAGS) $(INCLUDE) -D__3DS__
@@ -27,8 +29,9 @@ LDFLAGS := -specs=3dsx.specs -g $(ARCH) \
 LIBS := -lctru -lm
 LIBDIRS := $(CTRULIB)
 
-GAME_CFILES := sys_task_manager.c map_tile_behavior.c overlay_manager.c narc.c rtc.c
+GAME_CFILES := sys_task_manager.c map_tile_behavior.c overlay_manager.c narc.c rtc.c heap.c
 SDK_CFILES := convert.c
+FND_CFILES := list.c heapcommon.c expheap.c allocator.c
 PLATFORM_CFILES := main_3ds.c real_port_smoke.c runtime_adapters.c
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
@@ -37,6 +40,7 @@ export OUTPUT := $(CURDIR)/$(BUILD)/$(TARGET)
 export TOPDIR := $(CURDIR)
 export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
 export VPATH += $(CURDIR)/$(NITROSDK_DIR)/libraries/rtc/src
+export VPATH += $(CURDIR)/$(NITROSYSTEM_DIR)/libraries/fnd/src
 export DEPSDIR := $(CURDIR)/$(BUILD)
 export ROMFS := $(CURDIR)/$(ROMFS_ROOT)
 export APP_TITLE := Pokemon Platinum Real Port
@@ -44,9 +48,12 @@ export APP_DESCRIPTION := Original game code portability bootstrap
 export APP_AUTHOR := pret contributors
 export _3DSXDEPS := $(OUTPUT).smdh
 export _3DSXFLAGS := --smdh=$(OUTPUT).smdh --romfs=$(ROMFS)
-export OFILES := $(GAME_CFILES:.c=.o) $(SDK_CFILES:.c=.o) $(PLATFORM_CFILES:.c=.o)
+export OFILES := $(GAME_CFILES:.c=.o) $(SDK_CFILES:.c=.o) \
+	$(FND_CFILES:.c=.o) $(PLATFORM_CFILES:.c=.o)
 export LD := $(CC)
 export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
+	-I$(CURDIR)/$(NITROSYSTEM_DIR)/include \
+	-I$(CURDIR)/$(NITROSYSTEM_DIR)/libraries/fnd/include \
 	$(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
@@ -59,11 +66,12 @@ all: $(NARC_ROMFS)
 check-host: $(NARC_ROMFS)
 	@mkdir -p $(BUILD)
 	$(HOSTCC) $(COMMON_FLAGS) $(foreach dir,$(INCLUDES),-I$(dir)) \
+		-I$(NITROSYSTEM_DIR)/include -I$(NITROSYSTEM_DIR)/libraries/fnd/include \
 		-fno-short-enums \
 		$(addprefix src/,$(GAME_CFILES)) \
 		$(addprefix $(NITROSDK_DIR)/libraries/rtc/src/,$(SDK_CFILES)) \
 		platform/3ds/real_port_smoke.c platform/3ds/runtime_adapters.c \
-		platform/3ds/assert_host.c \
+		platform/3ds/fnd_host.c platform/3ds/assert_host.c \
 		platform/3ds/smoke_host_main.c -o $(BUILD)/real-port-smoke
 	$(BUILD)/real-port-smoke
 
@@ -80,7 +88,10 @@ $(NARC_ROMFS): $(NARC_SOURCE)
 else
 
 DEPENDS := $(OFILES:.o=.d)
-ORIGINAL_ABI_OFILES := $(GAME_CFILES:.c=.o) $(SDK_CFILES:.c=.o) real_port_smoke.o
+ORIGINAL_ABI_OFILES := $(GAME_CFILES:.c=.o) $(SDK_CFILES:.c=.o) \
+	$(FND_CFILES:.c=.o) real_port_smoke.o
+
+$(FND_CFILES:.c=.o): CFLAGS += -Wno-compare-distinct-pointer-types
 
 $(ORIGINAL_ABI_OFILES): CFLAGS += -fno-short-enums
 

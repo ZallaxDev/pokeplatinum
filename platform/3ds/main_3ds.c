@@ -25,6 +25,7 @@ int main(void)
     printf("Original src/overlay_manager.c: %s\n", passed ? "PASS" : "FAIL");
     printf("Original src/narc.c: %s\n", passed ? "PASS" : "FAIL");
     printf("Original src/rtc.c: %s\n", passed ? "PASS" : "FAIL");
+    printf("Original src/heap.c + FND: %s\n", passed ? "PASS" : "FAIL");
     if (!passed) {
         printf("\n%s\n", failure);
     }

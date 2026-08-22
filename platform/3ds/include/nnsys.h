@@ -3,7 +3,7 @@
 
 #include "pokeplatinum_compat.h"
 
-typedef int OSArenaId;
-typedef struct NNSFndAllocator NNSFndAllocator;
+#include <nnsys/fnd/allocator.h>
+#include <nnsys/fnd/expheap.h>
 
 #endif // POKEPLATINUM_3DS_NNSYS_H

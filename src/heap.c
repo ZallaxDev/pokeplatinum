@@ -3,8 +3,8 @@
 #include <nitro.h>
 #include <string.h>
 
-#include "comm_manager.h"
-#include "error_message_reset.h"
+BOOL CommManager_IsInitialized(void);
+void ErrorMessageReset_PrintErrorAndReset(void);
 
 typedef struct HeapInfo {
     NNSFndHeapHandle *heapHandles;
@@ -334,5 +334,6 @@ void Heap_Realloc(void *ptr, u32 newSize)
 
 BOOL GF_heap_c_dummy_return_true(u32 heapID)
 {
+    (void)heapID;
     return TRUE;
 }

@@ -94,6 +94,9 @@ static BOOL Fail(char *failure, size_t failureSize, const char *message)
 
 BOOL RealPortSmoke_Run(char *failure, size_t failureSize)
 {
+    const HeapParam heapTemplates[] = {
+        { 2 * 1024 * 1024, OS_ARENA_MAIN },
+    };
     const u32 maxTasks = 4;
     void *memory = malloc(SysTaskManager_GetRequiredSize(maxTasks));
     TaskSmokeContext context = { 0 };
@@ -111,6 +114,42 @@ BOOL RealPortSmoke_Run(char *failure, size_t failureSize)
     u8 memberMagic[4];
     RTCDate date;
     RTCTime timeValue;
+    void *heapLow;
+    void *heapHigh;
+    void *childAllocation;
+    u32 freeBefore;
+
+    Heap_InitSystem(heapTemplates, 1, HEAP_ID_MAX, 0);
+    if (!Heap_Create(HEAP_ID_SYSTEM, HEAP_ID_APPLICATION, 512 * 1024)) {
+        return Fail(failure, failureSize, "original application heap creation failed");
+    }
+    freeBefore = HeapExp_FndGetTotalFreeSize(HEAP_ID_APPLICATION);
+    heapLow = Heap_Alloc(HEAP_ID_APPLICATION, 64);
+    heapHigh = Heap_AllocAtEnd(HEAP_ID_APPLICATION, 128);
+    if (heapLow == NULL || heapHigh == NULL
+        || ((uintptr_t)heapLow & 3) != 0 || ((uintptr_t)heapHigh & 3) != 0
+        || HeapExp_FndGetTotalFreeSize(HEAP_ID_APPLICATION) >= freeBefore) {
+        return Fail(failure, failureSize, "original heap allocation failed");
+    }
+    Heap_Free(heapLow);
+    Heap_Free(heapHigh);
+    if (!Heap_CreateAtEnd(HEAP_ID_APPLICATION, HEAP_ID_FIELD1, 64 * 1024)) {
+        return Fail(failure, failureSize, "original child heap creation failed");
+    }
+    childAllocation = Heap_Alloc(HEAP_ID_FIELD1, 256);
+    if (childAllocation == NULL) {
+        return Fail(failure, failureSize, "original child heap allocation failed");
+    }
+    Heap_Free(childAllocation);
+    Heap_Destroy(HEAP_ID_FIELD1);
+
+    FSFile invalidFile;
+    FS_InitFile(&invalidFile);
+    if (FS_OpenFile(&invalidFile, "/demo/title/titledemo.narc")
+        || FS_OpenFile(&invalidFile, "../titledemo.narc")
+        || FS_OpenFile(&invalidFile, "demo\\title\\titledemo.narc")) {
+        return Fail(failure, failureSize, "native Nitro FS accepted an unsafe path");
+    }
 
     if (memory == NULL) {
         return Fail(failure, failureSize, "scheduler allocation failed");
@@ -241,6 +280,8 @@ BOOL RealPortSmoke_Run(char *failure, size_t failureSize)
         || TimeElapsed(10, 20) != 10) {
         return Fail(failure, failureSize, "original RTC update/calendar logic failed");
     }
+
+    Heap_Destroy(HEAP_ID_APPLICATION);
 
     failure[0] = '\0';
     return TRUE;
