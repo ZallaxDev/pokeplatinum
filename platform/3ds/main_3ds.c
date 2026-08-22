@@ -13,12 +13,16 @@
 #define SAVE_SMOKE_PATH "port3ds-atomic-smoke.bin"
 #define SAVE_SMOKE_MAGIC 0x50543344u
 #define SAVE_SMOKE_INITIAL_VALUE 0x13579BDFu
+#define GENERATED_NARC_PATH "generated/evo.narc"
+#define GENERATED_NARC_CAPACITY 32768
 
 typedef struct SaveSmokeRecord {
     uint32_t magic;
     uint32_t value;
     uint32_t checksum;
 } SaveSmokeRecord;
+
+static unsigned char sGeneratedNarc[GENERATED_NARC_CAPACITY];
 
 static const char *DescribeInput(uint32_t keys)
 {
@@ -111,6 +115,25 @@ static bool LoadSaveSmokeRecord(SaveSmokeRecord *record)
     return PlatformSave_WriteAtomic(SAVE_SMOKE_PATH, record, sizeof(*record));
 }
 
+static bool LoadGeneratedNarc(void)
+{
+    size_t narcSize;
+    uint32_t checksum;
+
+    if (!PlatformFile_GetSize(GENERATED_NARC_PATH, &narcSize)
+        || narcSize == 0 || narcSize > sizeof(sGeneratedNarc)) {
+        return false;
+    }
+    if (!PlatformFile_Read(GENERATED_NARC_PATH, sGeneratedNarc, narcSize)) {
+        return false;
+    }
+    checksum = Fnv1a(sGeneratedNarc, narcSize);
+    Debug_Log("NARC evo %u bytes", (unsigned int)narcSize);
+    Debug_Log("NARC FNV-1a %08lx", (unsigned long)checksum);
+    Debug_Log("NARC EXPORT OK");
+    return true;
+}
+
 int main(void)
 {
     static unsigned char smokeData[256];
@@ -163,6 +186,9 @@ int main(void)
         }
     } else {
         Debug_Error("SAVE TEST FAILED");
+    }
+    if (!LoadGeneratedNarc()) {
+        Debug_Error("GENERATED NARC FAILED");
     }
 
     while (Platform_MainLoop()) {

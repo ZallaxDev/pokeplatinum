@@ -41,6 +41,8 @@ Debug build with the bottom-screen ring-buffer console:
 make 3ds DEBUG=1
 ```
 
+The NDS build directory must remain configured. The 3DS target invokes Ninja for its allowlisted generated resources, then stages those files in the ignored mode-specific build directory used as RomFS.
+
 To build the deliberate fatal-screen smoke test:
 
 ```sh

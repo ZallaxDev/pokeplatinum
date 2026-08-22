@@ -23,7 +23,8 @@ BUILD := build-3ds-release
 endif
 SOURCES := platform/3ds platform/common
 INCLUDES := platform/include
-ROMFS := platform/3ds/romfs
+STATIC_ROMFS := platform/3ds/romfs
+GENERATED_NARC := build/res/pokemon/evo.narc
 
 ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 CFLAGS := -g -Wall -Wextra -Werror -O2 -mword-relocations -ffunction-sections $(ARCH)
@@ -39,7 +40,7 @@ export OUTPUT := $(CURDIR)/build/$(TARGET)
 export TOPDIR := $(CURDIR)
 export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
 export DEPSDIR := $(CURDIR)/$(BUILD)
-export ROMFS := $(CURDIR)/$(ROMFS)
+export ROMFS := $(CURDIR)/$(BUILD)/romfs
 export APP_TITLE := Pokemon Platinum 3DS
 export APP_DESCRIPTION := Native 3DS port bootstrap
 export APP_AUTHOR := pret contributors
@@ -57,6 +58,11 @@ export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 all:
 	@mkdir -p $(BUILD) build
+	@ninja -C build res/pokemon/evo.narc
+	@rm -rf $(ROMFS)
+	@mkdir -p $(ROMFS)/generated
+	@cp -R $(STATIC_ROMFS)/. $(ROMFS)
+	@cp $(GENERATED_NARC) $(ROMFS)/generated/evo.narc
 	@rm -f build/$(TARGET).elf build/$(TARGET).3dsx
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/platform/3ds/Makefile
 

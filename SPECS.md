@@ -59,7 +59,7 @@ The NDS `NitroMain` loop will be split conceptually into game initialization, on
 
 ## Filesystem And Assets
 
-Game-facing paths are relative and never contain `romfs:/` or `sdmc:/`. The 3DS backend maps resource reads to RomFS. The existing generated resource pipeline remains authoritative; original NARC and related formats are retained wherever their parsers are portable. No commercial ROM is downloaded or committed.
+Game-facing paths are relative and never contain `romfs:/` or `sdmc:/`. The 3DS backend maps resource reads to RomFS. The existing generated resource pipeline remains authoritative; `make 3ds` asks Ninja for allowlisted generated assets and stages them in the mode-specific build directory before packaging. Generated NARCs are not copied into the source tree or committed. Original NARC and related formats are retained wherever their parsers are portable. No commercial ROM is downloaded or committed.
 
 The initial filesystem API supports file sizing and exact reads. Streaming/open/seek primitives will be introduced before connecting the NARC parser, so NARC parsing does not depend on libctru file paths.
 

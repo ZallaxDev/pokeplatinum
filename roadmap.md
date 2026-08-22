@@ -67,8 +67,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 
 ## Phase 3 - Asset And Renderer Bootstrap
 
-- [ ] Export generated NDS resources into 3DS RomFS without commercial ROM data.
+- [x] Export generated NDS resources into 3DS RomFS without commercial ROM data.
   - Verify: load a generated Platinum NARC and match its expected checksum.
+  - Result: the build generated and staged `res/pokemon/evo.narc` without adding it to the source tree; isolated Azahar loaded 26,468 bytes and reported FNV-1a `a955d414` plus `NARC EXPORT OK`.
 - [ ] Parse a real NARC through `PlatformFile`.
   - Verify: list member count and sizes for a selected archive in the debug overlay.
 - [ ] Initialize Citro2D/Citro3D render targets.
