@@ -1,5 +1,6 @@
 # Build directory
 /build/
+/build-3ds*/
 
 # Metroskrew artifacts
 /metroskrew-*.tar.xz

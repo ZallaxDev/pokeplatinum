@@ -2,6 +2,7 @@
 .PHONY:           \
 	all           \
 	check         \
+	check-3ds-host \
 	clean         \
 	configure     \
 	distclean     \
@@ -17,6 +18,7 @@
 	skrewrm       \
 	skrewup       \
 	target        \
+	3ds           \
 	update
 
 ROM_REVISION ?= 1
@@ -99,6 +101,12 @@ debug: setup_debug rom
 
 check: rom
 	$(MESON) test -C $(BUILD)
+
+3ds:
+	$(MAKE) -f platform/3ds/Makefile
+
+check-3ds-host:
+	$(MAKE) -f platform/3ds/Makefile check-host
 
 rom: $(BUILD)/build.ninja
 	$(NINJA) -C $(BUILD) pokeplatinum.us.nds

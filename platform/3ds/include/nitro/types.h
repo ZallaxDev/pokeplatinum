@@ -1,0 +1,6 @@
+#ifndef POKEPLATINUM_3DS_NITRO_TYPES_H
+#define POKEPLATINUM_3DS_NITRO_TYPES_H
+
+#include "pokeplatinum_compat.h"
+
+#endif // POKEPLATINUM_3DS_NITRO_TYPES_H
