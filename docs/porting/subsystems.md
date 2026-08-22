@@ -18,7 +18,7 @@ Classification describes logic reuse, not whether a file currently compiles with
 | Timer | hardware-dependent | `src/timer.c` | monotonic platform clock |
 | RTC | mixed | `src/rtc.c` | portable calendar and 3DS acquisition implemented; connect original consumers |
 | Files and NARC | mixed | `src/system.c`, `src/narc.c` | portable stream API under NARC parser |
-| BG/windows | mixed | `src/bg_window.c` | retain CPU state, replace GX/G2 submission |
+| BG/windows | mixed | `src/bg_window.c` | 4bpp text BG decode implemented; connect CPU layer/window state next |
 | Graphics resource loading | mixed | `src/graphics.c` | retain formats, replace NNS parsing/upload as needed |
 | Sprites/OAM | hardware-dependent | `src/render_oam.c`, `src/sprite_transfer.c` | renderer sprite abstraction |
 | 3D renderer | hardware-dependent | `src/g3d_pipeline.c`, `src/easy3d.c` | Citro3D backend and format loaders |

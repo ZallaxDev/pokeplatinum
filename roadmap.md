@@ -109,8 +109,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 
 ## Phase 5 - UI And Field Demo
 
-- [ ] Render DS BG tilemaps and palettes through the 3DS renderer.
+- [x] Render DS BG tilemaps and palettes through the 3DS renderer.
   - Verify: a real Platinum background matches a reference capture.
+  - Result: portable NCGR/NCLR/NSCR decoding rendered the real Underground top-screen background from generated NARC members 0/1/2; isolated Azahar's clean preview showed the coherent `256x192` map, grid, and lower panel, while host and sanitizer smokes verified palette banks and H/V flips.
 - [ ] Render windows, fonts, control codes, fades, and transitions.
   - Verify: a real dialogue box displays wrapped text with correct colors and timing.
 - [ ] Render OAM-compatible sprites and animations.

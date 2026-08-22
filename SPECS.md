@@ -77,7 +77,7 @@ VRAM banks, OAM addresses, GX/G2 registers, HBlank writes, and DS texture proxie
 
 The native presentation base owns Citro3D and Citro2D initialization, one render target for each physical screen, frame submission, and a bounded GPU text buffer. Bootstrap and fatal diagnostics use the same GPU path instead of mixing software consoles with Citro3D framebuffers. Each screen also owns a row-major `256x192` RGBA logical surface; the backend converts it to PICA tiled texture layout and presents it nearest-filtered at `320x240`. The top image is centered at physical x=40 while the bottom image fills its 320-pixel width. Game render commands remain a separate follow-up layer.
 
-The sprite path supports tiled uploads, repeated image submission, independent position/scale/rotation, source transparency, and per-instance alpha blending. Bounds-checked portable readers cover the NCGR character and NCLR palette subsets needed by 4bpp tiled icons. The bootstrap decodes Turtwig's first `32x32` frame from generated `pl_poke_icon.narc` member 394 with shared palette member 0, bank 1; no source PNG is packaged into RomFS.
+The sprite path supports tiled uploads, repeated image submission, independent position/scale/rotation, source transparency, and per-instance alpha blending. Bounds-checked portable readers cover 4bpp NCGR character, NCLR palette, and text-mode NSCR data. Text BG decoding resolves 10-bit tile indices, per-entry palette banks, horizontal/vertical flips, and a caller-selected viewport into a logical surface. The bootstrap decodes Turtwig's first `32x32` frame and the Underground top-screen `256x192` background directly from generated NARCs; no source PNG is packaged into RomFS.
 
 ## Audio
 

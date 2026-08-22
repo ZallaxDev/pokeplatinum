@@ -29,12 +29,14 @@ INCLUDES := platform/include
 STATIC_ROMFS := platform/3ds/romfs
 GENERATED_EVO_NARC := build/res/pokemon/evo.narc
 GENERATED_ICON_NARC := build/res/pokemon/pl_poke_icon.narc
+GENERATED_UNDERGROUND_BG_NARC := build/res/graphics/underground_top_screen/underground_top_screen.narc
 HOST_RUNTIME_SMOKE := build-3ds-host/game_runtime_smoke
 HOST_TASK_SMOKE := build-3ds-host/game_task_smoke
 HOST_APPLICATION_SMOKE := build-3ds-host/game_application_smoke
 HOST_CLOCK_SMOKE := build-3ds-host/game_clock_smoke
 HOST_MEMORY_SMOKE := build-3ds-host/memory_smoke
 HOST_COMMUNICATION_SMOKE := build-3ds-host/game_communication_smoke
+HOST_NITRO2D_SMOKE := build-3ds-host/nitro2d_smoke
 
 ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 CFLAGS := -g -Wall -Wextra -Werror -O2 -mword-relocations -ffunction-sections $(ARCH)
@@ -64,16 +66,17 @@ export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 	$(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
-.PHONY: all clean host-application-smoke host-check host-clock-smoke host-communication-smoke host-memory-smoke host-runtime-smoke host-task-smoke
+.PHONY: all clean host-application-smoke host-check host-clock-smoke host-communication-smoke host-memory-smoke host-nitro2d-smoke host-runtime-smoke host-task-smoke
 
 all: host-check
 	@mkdir -p $(BUILD) build
-	@ninja -C build res/pokemon/evo.narc res/pokemon/pl_poke_icon.narc
+	@ninja -C build res/pokemon/evo.narc res/pokemon/pl_poke_icon.narc res/graphics/underground_top_screen/underground_top_screen.narc
 	@rm -rf $(ROMFS)
 	@mkdir -p $(ROMFS)/generated
 	@cp -R $(STATIC_ROMFS)/. $(ROMFS)
 	@cp $(GENERATED_EVO_NARC) $(ROMFS)/generated/evo.narc
 	@cp $(GENERATED_ICON_NARC) $(ROMFS)/generated/pl_poke_icon.narc
+	@cp $(GENERATED_UNDERGROUND_BG_NARC) $(ROMFS)/generated/underground_top_screen.narc
 	@rm -f build/$(TARGET).elf build/$(TARGET).3dsx
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/platform/3ds/Makefile
 
@@ -119,7 +122,14 @@ host-communication-smoke:
 		-o $(HOST_COMMUNICATION_SMOKE)
 	@$(HOST_COMMUNICATION_SMOKE)
 
-host-check: host-runtime-smoke host-task-smoke host-application-smoke host-clock-smoke host-memory-smoke host-communication-smoke
+host-nitro2d-smoke:
+	@mkdir -p $(dir $(HOST_NITRO2D_SMOKE))
+	@$(HOST_CC) -std=c11 -Wall -Wextra -Werror -Iplatform/include \
+		platform/common/nitro2d.c platform/tests/nitro2d_smoke.c \
+		-o $(HOST_NITRO2D_SMOKE)
+	@$(HOST_NITRO2D_SMOKE)
+
+host-check: host-runtime-smoke host-task-smoke host-application-smoke host-clock-smoke host-memory-smoke host-communication-smoke host-nitro2d-smoke
 
 clean:
 	@rm -rf build-3ds-debug build-3ds-debug-fatal build-3ds-release \

@@ -83,5 +83,6 @@ Debug and release objects are isolated in `build-3ds-debug/` and `build-3ds-rele
 7. Press START and confirm controlled exit.
 8. Confirm the top-screen `RTC` value matches the 3DS system date and time.
 9. Confirm the top screen reports `Network: OFFLINE - UNAVAILABLE` and continues updating.
+10. Press B and confirm the clean Underground background preview has coherent paths, palette, grid, and lower panel; press B again to restore diagnostics.
 
-`make check-3ds-host` also verifies leap-day, month, and year rollover; parent/child heap semantics; and immediate terminal offline results for all four communication categories.
+`make check-3ds-host` also verifies calendar rollover, heap semantics, offline results, and NSCR palette-bank/H/V-flip decoding.

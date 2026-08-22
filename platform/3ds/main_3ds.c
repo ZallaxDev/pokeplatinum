@@ -25,6 +25,11 @@
 #define GENERATED_NARC_CAPACITY 32768
 #define ICON_NARC_PATH "generated/pl_poke_icon.narc"
 #define ICON_NARC_MAX_SIZE (1024 * 1024)
+#define UNDERGROUND_BG_NARC_PATH "generated/underground_top_screen.narc"
+#define UNDERGROUND_BG_NARC_CAPACITY (64 * 1024)
+#define UNDERGROUND_BG_PALETTE_MEMBER 0
+#define UNDERGROUND_BG_TILES_MEMBER 1
+#define UNDERGROUND_BG_TILEMAP_MEMBER 2
 #define TURTWIG_ICON_MEMBER 394
 #define TURTWIG_PALETTE_MEMBER 0
 #define TURTWIG_PALETTE_BANK 1
@@ -39,6 +44,7 @@ static unsigned char sGeneratedNarc[GENERATED_NARC_CAPACITY];
 static size_t sGeneratedNarcSize;
 static unsigned char *sIconNarc;
 static uint32_t sIconPixels[32 * 32];
+static unsigned char sUndergroundBgNarc[UNDERGROUND_BG_NARC_CAPACITY];
 
 enum BootstrapTaskPhase {
     BOOTSTRAP_TASK_MAIN,
@@ -428,6 +434,47 @@ static bool LoadTurtwigIcon(void)
     return true;
 }
 
+static bool LoadUndergroundBackground(void)
+{
+    PlatformNarc archive;
+    PlatformNcgr image;
+    PlatformNclr palette;
+    PlatformNscr screen;
+    const void *imageData;
+    const void *paletteData;
+    const void *screenData;
+    size_t archiveSize;
+    size_t imageSize;
+    size_t paletteSize;
+    size_t screenSize;
+    uint32_t *pixels = PlatformGraphics_GetLogicalPixels(PLATFORM_SCREEN_TOP);
+
+    if (pixels == NULL
+        || !PlatformFile_GetSize(UNDERGROUND_BG_NARC_PATH, &archiveSize)
+        || archiveSize == 0 || archiveSize > sizeof(sUndergroundBgNarc)
+        || !PlatformFile_Read(UNDERGROUND_BG_NARC_PATH,
+            sUndergroundBgNarc, archiveSize)
+        || !PlatformNarc_Open(&archive, sUndergroundBgNarc, archiveSize)
+        || !PlatformNarc_GetMember(&archive, UNDERGROUND_BG_PALETTE_MEMBER,
+            &paletteData, &paletteSize)
+        || !PlatformNarc_GetMember(&archive, UNDERGROUND_BG_TILES_MEMBER,
+            &imageData, &imageSize)
+        || !PlatformNarc_GetMember(&archive, UNDERGROUND_BG_TILEMAP_MEMBER,
+            &screenData, &screenSize)
+        || !PlatformNclr_Open(&palette, paletteData, paletteSize)
+        || !PlatformNcgr_Open(&image, imageData, imageSize)
+        || !PlatformNscr_Open(&screen, screenData, screenSize)
+        || !PlatformNitro2D_DecodeTextBg4Bpp(&image, &palette, &screen, 0,
+            PLATFORM_LOGICAL_WIDTH, PLATFORM_LOGICAL_HEIGHT, false, pixels,
+            PLATFORM_LOGICAL_WIDTH * PLATFORM_LOGICAL_HEIGHT)
+        || !PlatformGraphics_UploadLogicalSurface(PLATFORM_SCREEN_TOP)) {
+        return false;
+    }
+    Debug_Log("UNDERGROUND BG 256x192");
+    Debug_Log("NSCR TILEMAP + FLIPS OK");
+    return true;
+}
+
 static bool BuildLogicalGrid(PlatformScreen screen)
 {
     uint32_t *pixels = PlatformGraphics_GetLogicalPixels(screen);
@@ -465,7 +512,7 @@ static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *
     const char *lastInput, const PlatformTickScheduler *tickScheduler,
     const GameRuntime *gameRuntime, const BootstrapGameState *gameState,
     const GameClockDateTime *clock, bool heapHierarchyReady,
-    const GameCommunicationResult *communicationResult)
+    const GameCommunicationResult *communicationResult, bool backgroundReady)
 {
     unsigned long long elapsedMs = tickScheduler->elapsedNs / 1000000ULL;
     unsigned long long rateMilliHz = elapsedMs == 0
@@ -512,12 +559,12 @@ static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *
         (unsigned long long)gameState->taskCounts[BOOTSTRAP_TASK_POST_FRAME],
         gameState->taskOrderValid ? "OK" : "BAD");
     PlatformGraphics_DrawText(128.0f, 215.0f, 0.34f, PLATFORM_RGBA(190, 215, 235, 255),
-        "TURTWIG x4   ALPHA: #4");
+        "%s | TURTWIG x4", backgroundReady ? "UNDERGROUND BG" : "BG FAILED");
     PlatformGraphics_DrawText(83.0f, 228.0f, 0.28f, PLATFORM_RGBA(180, 200, 220, 255),
 #if PORT3DS_DEBUG_OVERLAY
-        "START exits  |  L+R+SELECT toggles debug");
+        "B previews BG | L+R+SELECT debug | START exits");
 #else
-        "START exits this bootstrap build");
+        "B previews BG | START exits");
 #endif
 }
 
@@ -541,6 +588,8 @@ int main(void)
     size_t smokeSize = 0;
     const char *lastInput = "NONE";
     bool heapHierarchyReady;
+    bool backgroundReady;
+    bool backgroundPreview = false;
     bool platformReady = Platform_Init();
 
     if (!GameCommunication_InitOffline(&communication)
@@ -601,6 +650,10 @@ int main(void)
     if (!LoadTurtwigIcon()) {
         Debug_Error("PLATINUM ASSET FAILED");
     }
+    backgroundReady = LoadUndergroundBackground();
+    if (!backgroundReady) {
+        Debug_Error("UNDERGROUND BG FAILED");
+    }
     if (LoadSaveSmokeRecord(&saveRecord)) {
         Debug_Log("SAVE VALUE %08lx", (unsigned long)saveRecord.value);
         if (PlatformSave_HasStagedWrite(SAVE_SMOKE_PATH)) {
@@ -655,6 +708,10 @@ int main(void)
                 Debug_Error("SAVE COMMIT FAILED");
             }
         }
+        if (input.pressed & GAME_KEY_B) {
+            backgroundPreview = !backgroundPreview;
+            Debug_Log("BG PREVIEW %s", backgroundPreview ? "ON" : "OFF");
+        }
 
 #if PORT3DS_DEBUG_OVERLAY
         if ((input.held & (GAME_KEY_L | GAME_KEY_R)) == (GAME_KEY_L | GAME_KEY_R)
@@ -668,10 +725,12 @@ int main(void)
             Debug_Error("RTC UPDATE FAILED");
         }
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_TOP);
-        PlatformGraphics_DrawSpriteTest();
-        RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler,
-            &gameRuntime, &gameState, &clock, heapHierarchyReady,
-            &communicationResult);
+        if (!backgroundPreview) {
+            PlatformGraphics_DrawSpriteTest();
+            RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler,
+                &gameRuntime, &gameState, &clock, heapHierarchyReady,
+                &communicationResult, backgroundReady);
+        }
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_BOTTOM);
         Debug_Render(frame, lastInput, tickScheduler.tickCount, tickScheduler.elapsedNs);
         Platform_WaitForFrame();
