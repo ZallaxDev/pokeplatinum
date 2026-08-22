@@ -24,7 +24,8 @@ endif
 SOURCES := platform/3ds platform/common
 INCLUDES := platform/include
 STATIC_ROMFS := platform/3ds/romfs
-GENERATED_NARC := build/res/pokemon/evo.narc
+GENERATED_EVO_NARC := build/res/pokemon/evo.narc
+GENERATED_ICON_NARC := build/res/pokemon/pl_poke_icon.narc
 
 ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 CFLAGS := -g -Wall -Wextra -Werror -O2 -mword-relocations -ffunction-sections $(ARCH)
@@ -47,7 +48,7 @@ export APP_AUTHOR := pret contributors
 export _3DSXDEPS := $(OUTPUT).smdh
 export _3DSXFLAGS := --smdh=$(OUTPUT).smdh --romfs=$(ROMFS)
 
-CFILES := main_3ds.c platform_3ds.c input_3ds.c filesystem_3ds.c debug_3ds.c time_3ds.c save_3ds.c graphics_3ds.c memory.c archive.c
+CFILES := main_3ds.c platform_3ds.c input_3ds.c filesystem_3ds.c debug_3ds.c time_3ds.c save_3ds.c graphics_3ds.c memory.c archive.c nitro2d.c
 export OFILES := $(CFILES:.c=.o)
 export LD := $(CC)
 export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
@@ -58,11 +59,12 @@ export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 all:
 	@mkdir -p $(BUILD) build
-	@ninja -C build res/pokemon/evo.narc
+	@ninja -C build res/pokemon/evo.narc res/pokemon/pl_poke_icon.narc
 	@rm -rf $(ROMFS)
 	@mkdir -p $(ROMFS)/generated
 	@cp -R $(STATIC_ROMFS)/. $(ROMFS)
-	@cp $(GENERATED_NARC) $(ROMFS)/generated/evo.narc
+	@cp $(GENERATED_EVO_NARC) $(ROMFS)/generated/evo.narc
+	@cp $(GENERATED_ICON_NARC) $(ROMFS)/generated/pl_poke_icon.narc
 	@rm -f build/$(TARGET).elf build/$(TARGET).3dsx
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/platform/3ds/Makefile
 

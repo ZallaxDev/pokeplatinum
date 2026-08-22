@@ -23,6 +23,8 @@ void PlatformGraphics_BeginScreen(PlatformScreen screen);
 uint32_t *PlatformGraphics_GetLogicalPixels(PlatformScreen screen);
 bool PlatformGraphics_UploadLogicalSurface(PlatformScreen screen);
 void PlatformGraphics_PresentLogicalSurface(PlatformScreen screen);
+bool PlatformGraphics_SetSpriteTexture(const uint32_t *pixels, unsigned int width,
+    unsigned int height);
 void PlatformGraphics_DrawSpriteTest(void);
 void PlatformGraphics_DrawText(float x, float y, float scale, uint32_t color,
     const char *format, ...);

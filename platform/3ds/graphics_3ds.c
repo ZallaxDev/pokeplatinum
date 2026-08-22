@@ -46,6 +46,12 @@ static unsigned int TiledOffset(unsigned int textureWidth, unsigned int x, unsig
     return tile * 64 + MortonOffset(x & 7, y & 7);
 }
 
+static uint32_t TextureColor(uint32_t rgba)
+{
+    return (rgba & 0x000000FFu) << 24 | (rgba & 0x0000FF00u) << 8
+        | (rgba & 0x00FF0000u) >> 8 | (rgba & 0xFF000000u) >> 24;
+}
+
 static bool InitSpriteTexture(void)
 {
     uint32_t *pixels;
@@ -72,7 +78,7 @@ static bool InitSpriteTexture(void)
                     color = PLATFORM_RGBA(255, 90, 180, 255);
                 }
             }
-            pixels[TiledOffset(SPRITE_TEXTURE_SIZE, x, y)] = color;
+            pixels[TiledOffset(SPRITE_TEXTURE_SIZE, x, y)] = TextureColor(color);
         }
     }
     C3D_TexFlush(&sSpriteTexture);
@@ -228,7 +234,8 @@ bool PlatformGraphics_UploadLogicalSurface(PlatformScreen screen)
     for (unsigned int y = 0; y < PLATFORM_LOGICAL_HEIGHT; y++) {
         for (unsigned int x = 0; x < PLATFORM_LOGICAL_WIDTH; x++) {
             unsigned int offset = TiledOffset(LOGICAL_TEXTURE_SIZE, x, y);
-            texturePixels[offset] = surface->pixels[y * PLATFORM_LOGICAL_WIDTH + x];
+            texturePixels[offset] = TextureColor(
+                surface->pixels[y * PLATFORM_LOGICAL_WIDTH + x]);
         }
     }
     C3D_TexFlush(&surface->texture);
@@ -252,6 +259,26 @@ void PlatformGraphics_DrawSpriteTest(void)
         C2D_Color32(235, 245, 255, 255));
     C2D_AlphaImageTint(&alphaTint, 0.45f);
     C2D_DrawImageAt(sSpriteImage, 296.0f, 175.0f, 0.0f, &alphaTint, 1.0f, 1.0f);
+}
+
+bool PlatformGraphics_SetSpriteTexture(const uint32_t *pixels, unsigned int width,
+    unsigned int height)
+{
+    uint32_t *texturePixels;
+
+    if (!sSpriteTextureReady || pixels == NULL
+        || width != SPRITE_TEXTURE_SIZE || height != SPRITE_TEXTURE_SIZE) {
+        return false;
+    }
+    texturePixels = sSpriteTexture.data;
+    for (unsigned int y = 0; y < height; y++) {
+        for (unsigned int x = 0; x < width; x++) {
+            texturePixels[TiledOffset(SPRITE_TEXTURE_SIZE, x, y)] = TextureColor(
+                pixels[y * width + x]);
+        }
+    }
+    C3D_TexFlush(&sSpriteTexture);
+    return true;
 }
 
 void PlatformGraphics_PresentLogicalSurface(PlatformScreen screen)

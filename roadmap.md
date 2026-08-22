@@ -82,8 +82,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 - [x] Render a test texture, four sprites, and alpha blending.
   - Verify: emulator shows the expected texture and four independently positioned sprites, one semitransparent.
   - Result: isolated Azahar displayed four instances of a procedural tiled RGBA diamond with independent positions, scales, and rotations; the fourth rendered at 45% alpha over a white plate, and the overlay reported `SPRITE TEST OK` at 60 FPS.
-- [ ] Decode and render one real Platinum 2D asset.
+- [x] Decode and render one real Platinum 2D asset.
   - Verify: a recognizable sprite is visible without palette or tile corruption.
+  - Result: portable NCGR/NCLR readers decoded Turtwig icon member 394 and shared palette bank 1 from generated `pl_poke_icon.narc`; isolated Azahar showed the recognizable green/yellow `32x32` icon with transparent background and reported `PLATINUM ASSET OK` at 60 FPS.
 
 ## Phase 4 - Runtime Extraction
 

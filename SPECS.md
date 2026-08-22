@@ -61,7 +61,7 @@ The NDS `NitroMain` loop will be split conceptually into game initialization, on
 
 Game-facing paths are relative and never contain `romfs:/` or `sdmc:/`. The 3DS backend maps resource reads to RomFS. The existing generated resource pipeline remains authoritative; `make 3ds` asks Ninja for allowlisted generated assets and stages them in the mode-specific build directory before packaging. Generated NARCs are not copied into the source tree or committed. Original NARC and related formats are retained wherever their parsers are portable. No commercial ROM is downloaded or committed.
 
-The initial filesystem API supports file sizing and exact reads. The portable NARC view validates the container header, BTAF/BTNF/GMIF blocks, allocation table, and every member range over a buffer loaded through `PlatformFile`; it does not depend on libctru paths or packed host structures. Streaming/open/seek primitives will be introduced when archives no longer fit the bounded bootstrap buffer.
+The initial filesystem API supports file sizing and exact reads. The portable NARC view validates the container header, BTAF/BTNF/GMIF blocks, allocation table, and every member range over a buffer loaded through `PlatformFile`; it does not depend on libctru paths or packed host structures. The bootstrap loads the 585,336-byte generated icon archive into a capacity-tracked heap with a 1 MiB upper bound. Streaming/open/seek primitives will be introduced before substantially larger archives are connected.
 
 ## Graphics
 
@@ -75,7 +75,7 @@ VRAM banks, OAM addresses, GX/G2 registers, HBlank writes, and DS texture proxie
 
 The native presentation base owns Citro3D and Citro2D initialization, one render target for each physical screen, frame submission, and a bounded GPU text buffer. Bootstrap and fatal diagnostics use the same GPU path instead of mixing software consoles with Citro3D framebuffers. Each screen also owns a row-major `256x192` RGBA logical surface; the backend converts it to PICA tiled texture layout and presents it nearest-filtered at `320x240`. The top image is centered at physical x=40 while the bottom image fills its 320-pixel width. Game render commands remain a separate follow-up layer.
 
-The bootstrap sprite smoke uses a procedural RGBA texture to exercise tiled uploads, repeated image submission, independent position/scale/rotation, source transparency, and per-instance alpha blending. It is test content only; Platinum texture/palette decoding remains the next asset-layer boundary.
+The sprite path supports tiled uploads, repeated image submission, independent position/scale/rotation, source transparency, and per-instance alpha blending. Bounds-checked portable readers cover the NCGR character and NCLR palette subsets needed by 4bpp tiled icons. The bootstrap decodes Turtwig's first `32x32` frame from generated `pl_poke_icon.narc` member 394 with shared palette member 0, bank 1; no source PNG is packaged into RomFS.
 
 ## Audio
 

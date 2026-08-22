@@ -8,6 +8,7 @@
 #include "platform/graphics.h"
 #include "platform/input.h"
 #include "platform/memory.h"
+#include "platform/nitro2d.h"
 #include "platform/platform.h"
 #include "platform/save.h"
 #include "platform/time.h"
@@ -17,6 +18,11 @@
 #define SAVE_SMOKE_INITIAL_VALUE 0x13579BDFu
 #define GENERATED_NARC_PATH "generated/evo.narc"
 #define GENERATED_NARC_CAPACITY 32768
+#define ICON_NARC_PATH "generated/pl_poke_icon.narc"
+#define ICON_NARC_MAX_SIZE (1024 * 1024)
+#define TURTWIG_ICON_MEMBER 394
+#define TURTWIG_PALETTE_MEMBER 0
+#define TURTWIG_PALETTE_BANK 1
 
 typedef struct SaveSmokeRecord {
     uint32_t magic;
@@ -26,6 +32,8 @@ typedef struct SaveSmokeRecord {
 
 static unsigned char sGeneratedNarc[GENERATED_NARC_CAPACITY];
 static size_t sGeneratedNarcSize;
+static unsigned char *sIconNarc;
+static uint32_t sIconPixels[32 * 32];
 
 static const char *DescribeInput(uint32_t keys)
 {
@@ -164,6 +172,60 @@ static bool InspectGeneratedNarc(void)
     return true;
 }
 
+static bool LoadTurtwigIcon(void)
+{
+    PlatformNarc archive;
+    PlatformNcgr image;
+    PlatformNclr palette;
+    const void *imageData;
+    const void *paletteData;
+    size_t archiveSize;
+    size_t imageSize;
+    size_t paletteSize;
+
+    if (!PlatformFile_GetSize(ICON_NARC_PATH, &archiveSize)
+        || archiveSize == 0 || archiveSize > ICON_NARC_MAX_SIZE) {
+        Debug_Error("ICON archive size failed");
+        return false;
+    }
+    if (!PlatformHeap_Create(PLATFORM_HEAP_APPLICATION, archiveSize)) {
+        Debug_Error("ICON heap create failed");
+        return false;
+    }
+    sIconNarc = PlatformHeap_Alloc(PLATFORM_HEAP_APPLICATION, archiveSize, 8);
+    if (sIconNarc == NULL || !PlatformFile_Read(ICON_NARC_PATH, sIconNarc, archiveSize)) {
+        Debug_Error("ICON archive read failed");
+        return false;
+    }
+    if (!PlatformNarc_Open(&archive, sIconNarc, archiveSize)
+        || !PlatformNarc_GetMember(&archive, TURTWIG_PALETTE_MEMBER,
+            &paletteData, &paletteSize)
+        || !PlatformNarc_GetMember(&archive, TURTWIG_ICON_MEMBER, &imageData, &imageSize)) {
+        Debug_Error("ICON NARC parse failed");
+        return false;
+    }
+    if (!PlatformNclr_Open(&palette, paletteData, paletteSize)
+        || !PlatformNcgr_Open(&image, imageData, imageSize)) {
+        Debug_Error("ICON NCGR/NCLR parse failed");
+        return false;
+    }
+    if (!PlatformNitro2D_DecodeTiles4Bpp(&image, &palette,
+            TURTWIG_PALETTE_BANK, 0, 32, 32, sIconPixels,
+            sizeof(sIconPixels) / sizeof(sIconPixels[0]))) {
+        Debug_Error("ICON tile decode failed");
+        return false;
+    }
+    if (!PlatformGraphics_SetSpriteTexture(sIconPixels, 32, 32)) {
+        Debug_Error("ICON texture upload failed");
+        return false;
+    }
+
+    Debug_Log("TURTWIG NCGR %u bytes", (unsigned int)imageSize);
+    Debug_Log("TURTWIG NCLR %u colors", (unsigned int)palette.colorCount);
+    Debug_Log("PLATINUM ASSET OK");
+    return true;
+}
+
 static bool BuildLogicalGrid(PlatformScreen screen)
 {
     uint32_t *pixels = PlatformGraphics_GetLogicalPixels(screen);
@@ -221,7 +283,7 @@ static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *
     PlatformGraphics_DrawText(52.0f, 157.0f, 0.42f, PLATFORM_RGBA(255, 255, 255, 255),
         "Cadence: %llu.%03llu Hz", rateMilliHz / 1000ULL, rateMilliHz % 1000ULL);
     PlatformGraphics_DrawText(128.0f, 215.0f, 0.34f, PLATFORM_RGBA(190, 215, 235, 255),
-        "SPRITES: 4   ALPHA: #4");
+        "TURTWIG x4   ALPHA: #4");
     PlatformGraphics_DrawText(83.0f, 228.0f, 0.28f, PLATFORM_RGBA(180, 200, 220, 255),
 #if PORT3DS_DEBUG_OVERLAY
         "START exits  |  L+R+SELECT toggles debug");
@@ -271,6 +333,9 @@ int main(void)
         Debug_Log("HEAP TEST OK");
     } else {
         Debug_Error("HEAP TEST FAILED");
+    }
+    if (!LoadTurtwigIcon()) {
+        Debug_Error("PLATINUM ASSET FAILED");
     }
     if (LoadSaveSmokeRecord(&saveRecord)) {
         Debug_Log("SAVE VALUE %08lx", (unsigned long)saveRecord.value);
