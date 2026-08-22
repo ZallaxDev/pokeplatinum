@@ -3,15 +3,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "game_overlay.h"
 #include "heap.h"
+#include "nitro/rtc.h"
 
 #define STATIC_OVERLAY_COUNT 128
 
 static BOOL sLoadedOverlays[STATIC_OVERLAY_COUNT];
 static u32 sOverlayLoadCount;
 static u32 sOverlayUnloadCount;
+static u32 sRTCReadCount;
 #ifdef __3DS__
 static const char *sFileRoot = "romfs:/";
 #else
@@ -23,6 +26,7 @@ void RuntimeAdapters_Reset(void)
     memset(sLoadedOverlays, 0, sizeof(sLoadedOverlays));
     sOverlayLoadCount = 0;
     sOverlayUnloadCount = 0;
+    sRTCReadCount = 0;
 }
 
 void RuntimeAdapters_SetFileRoot(const char *root)
@@ -43,6 +47,11 @@ u32 RuntimeAdapters_GetOverlayLoadCount(void)
 u32 RuntimeAdapters_GetOverlayUnloadCount(void)
 {
     return sOverlayUnloadCount;
+}
+
+u32 RuntimeAdapters_GetRTCReadCount(void)
+{
+    return sRTCReadCount;
 }
 
 void *Heap_Alloc(u32 heapID, u32 size)
@@ -134,4 +143,37 @@ BOOL FS_SeekFile(FSFile *file, s32 offset, FSSeekFileMode origin)
     }
 
     return fseek(file->handle, offset, sOrigins[origin]) == 0;
+}
+
+void RTC_Init(void)
+{
+    sRTCReadCount = 0;
+}
+
+RTCResult RTC_GetDateTimeAsync(RTCDate *date, RTCTime *timeValue, RTCCallback callback, void *arg)
+{
+    time_t current = time(NULL);
+    struct tm *local = localtime(&current);
+
+    if (date == NULL || timeValue == NULL || callback == NULL || local == NULL) {
+        return RTC_RESULT_ILLEGAL_PARAMETER;
+    }
+
+    int year = local->tm_year + 1900;
+    if (year < 2000) {
+        year = 2000;
+    } else if (year > 2099) {
+        year = 2099;
+    }
+
+    date->year = (u32)(year - 2000);
+    date->month = (u32)(local->tm_mon + 1);
+    date->day = (u32)local->tm_mday;
+    date->week = (RTCWeek)local->tm_wday;
+    timeValue->hour = (u32)local->tm_hour;
+    timeValue->minute = (u32)local->tm_min;
+    timeValue->second = (u32)local->tm_sec;
+    sRTCReadCount++;
+    callback(RTC_RESULT_SUCCESS, arg);
+    return RTC_RESULT_SUCCESS;
 }

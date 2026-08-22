@@ -28,6 +28,8 @@ The target recompiles and executes these game sources with devkitARM:
 - `src/map_tile_behavior.c`
 - `src/overlay_manager.c`
 - `src/narc.c`
+- `src/rtc.c`
+- `NitroSDK/libraries/rtc/src/convert.c`
 
 The libctru entry point is only a verification shell. It does not implement a
 parallel frontend or game runtime. Original game translation units retain the
@@ -48,7 +50,13 @@ mounts `titledemo.narc` at its original NitroFS path,
 `demo/title/titledemo.narc`, and verifies archive metadata plus whole and
 partial member reads. Resource paths remain owned by `src/narc.c`.
 
+`src/rtc.c` retains the game's cached date/time state, ten-frame polling
+interval, time-of-day policy, and elapsed-time behavior. The native transport
+fills Nitro `RTCDate` and `RTCTime` from the system clock and completes the SDK
+callback synchronously. Date/second conversion is the original portable
+NitroSDK implementation.
+
 The next runtime slice is the original heap implementation or another
 boot-path subsystem that can be isolated cleanly. The long-term entry path
 remains `src/main.c:NitroMain`; reaching it requires adapters for the Nitro OS,
-input, RTC, sound, graphics, save-device, and remaining overlay boundaries.
+input, sound, graphics, save-device, and remaining overlay boundaries.

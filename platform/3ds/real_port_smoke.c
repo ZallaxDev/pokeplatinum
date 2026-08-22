@@ -10,6 +10,7 @@
 #include "narc.h"
 #include "overlay_manager.h"
 #include "runtime_adapters.h"
+#include "rtc.h"
 #include "sys_task_manager.h"
 
 typedef struct TaskSmokeContext {
@@ -108,6 +109,8 @@ BOOL RealPortSmoke_Run(char *failure, size_t failureSize)
     NARC *narc;
     void *narcMember;
     u8 memberMagic[4];
+    RTCDate date;
+    RTCTime timeValue;
 
     if (memory == NULL) {
         return Fail(failure, failureSize, "scheduler allocation failed");
@@ -212,6 +215,31 @@ BOOL RealPortSmoke_Run(char *failure, size_t failureSize)
     NARC_ReadFromMemberByIndexPair(memberMagic, NARC_INDEX_DEMO__TITLE__TITLEDEMO, 11, 0, sizeof(memberMagic));
     if (memcmp(memberMagic, "RLCN", sizeof(memberMagic)) != 0) {
         return Fail(failure, failureSize, "original indexed NARC read failed");
+    }
+
+    InitRTC();
+    GetCurrentDateTime(&date, &timeValue);
+    if (date.year > 99 || date.month < 1 || date.month > 12
+        || date.day < 1 || date.day > 31 || date.week >= RTC_WEEK_MAX
+        || timeValue.hour > 23 || timeValue.minute > 59 || timeValue.second > 59
+        || GetSecondsSinceMidnight() != (int)(timeValue.hour * 3600 + timeValue.minute * 60 + timeValue.second)
+        || GetTimestamp() != RTC_ConvertDateTimeToSecond(&date, &timeValue)
+        || RuntimeAdapters_GetRTCReadCount() != 1) {
+        return Fail(failure, failureSize, "original RTC state initialization failed");
+    }
+
+    for (int i = 0; i < 11; i++) {
+        UpdateRTC();
+    }
+    if (RuntimeAdapters_GetRTCReadCount() != 2
+        || TimeOfDayForHour(3) != TIMEOFDAY_LATE_NIGHT
+        || TimeOfDayForHour(4) != TIMEOFDAY_MORNING
+        || TimeOfDayForHour(10) != TIMEOFDAY_DAY
+        || TimeOfDayForHour(17) != TIMEOFDAY_TWILIGHT
+        || TimeOfDayForHour(20) != TIMEOFDAY_NIGHT
+        || DayNumberForDate(&(RTCDate){ 24, 3, 1, RTC_WEEK_FRIDAY }) != 61
+        || TimeElapsed(10, 20) != 10) {
+        return Fail(failure, failureSize, "original RTC update/calendar logic failed");
     }
 
     failure[0] = '\0';

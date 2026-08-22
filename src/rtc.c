@@ -4,8 +4,6 @@
 #include <nnsys.h>
 #include <string.h>
 
-#include "inlines.h"
-
 typedef struct {
     BOOL valid;
     BOOL readInProgress;
@@ -137,6 +135,8 @@ BOOL IsNight(void)
     case TIMEOFDAY_LATE_NIGHT:
     case TIMEOFDAY_NIGHT:
         return TRUE;
+    default:
+        break;
     }
 
     return FALSE;

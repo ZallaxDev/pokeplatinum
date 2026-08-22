@@ -8,5 +8,6 @@ void RuntimeAdapters_SetFileRoot(const char *root);
 BOOL RuntimeAdapters_IsOverlayLoaded(FSOverlayID overlayID);
 u32 RuntimeAdapters_GetOverlayLoadCount(void);
 u32 RuntimeAdapters_GetOverlayUnloadCount(void);
+u32 RuntimeAdapters_GetRTCReadCount(void);
 
 #endif // POKEPLATINUM_3DS_RUNTIME_ADAPTERS_H
