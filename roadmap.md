@@ -103,8 +103,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 - [x] Port game heap hierarchy and allocation direction semantics.
   - Verify: representative game allocations pass alignment and high/low allocation tests.
   - Result: parent-backed child heaps reserve from both ends and release capacity on destroy; host and sanitizer smokes passed 16/32/64-byte alignment, low/high ordering, free-range reuse, and hierarchy guards, while isolated Azahar displayed `Heap hierarchy: LOW/HIGH OK`.
-- [ ] Disable unsupported communications through one explicit offline backend.
+- [x] Disable unsupported communications through one explicit offline backend.
   - Verify: networking menu probes return a visible unavailable message without hanging or crashing.
+  - Result: one synchronous backend returned immediate terminal unavailable results for local wireless, WFC, GTS, and Mystery Gift in host and sanitizer smokes; isolated Azahar displayed `Network: OFFLINE - UNAVAILABLE` while continuing at 60 FPS.
 
 ## Phase 5 - UI And Field Demo
 

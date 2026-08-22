@@ -23,4 +23,5 @@
 | Static application registry | Pass | BOOT-01 debug `283692d4...2257a6` | ALPHA/BETA alternate with visible init/main/exit sequence; host sequence smoke passes | Real application templates not registered yet |
 | RTC and calendar | Pass | BOOT-01 debug `8f98d553...c6a8ab` | Azahar clock matched host within 4 seconds; host rollover and sanitizer smokes pass | Supports Platinum's 2000-2099 RTC range |
 | Game heap hierarchy | Pass | BOOT-01 debug `80e50ef...0f70fd` | Azahar reports `LOW/HIGH OK`; host and sanitizer verify child arenas, alignment, direction, reuse, and destroy guards | Original heap callers not connected yet |
+| Offline communications | Pass | BOOT-01 debug `1f74a0e0...8364b8` | Azahar displays `OFFLINE - UNAVAILABLE`; host and sanitizer return four terminal results immediately | Original networking menus not connected yet |
 | Gameplay | Not started | - | - | NDS runtime not linked yet |

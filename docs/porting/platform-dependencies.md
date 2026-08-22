@@ -17,7 +17,7 @@ This inventory identifies replacement boundaries; it is not permission to replac
 | RTC | `src/rtc.c` | game clock and daily events | implemented `osGetTime` backend plus portable 2000-2099 calendar; consumers pending |
 | Keypad/touch | `src/system.c`, `src/touch_pad.c`, `src/touch_screen.c` | digital input, calibrated touch, hit tests | libctru HID feeding existing logical input model |
 | Sound/microphone | `src/sound_system.c`, `src/sound_chatot.c` | SDAT playback and Chatot recording | NDSP pipeline; microphone deferred separately |
-| Wireless/WFC | `src/wireless_manager.c`, `src/communication_system.c`, `lib/gds`, `lib/ppwlobby` | local and online communications | explicit offline backend for first playable port |
+| Wireless/WFC | `src/wireless_manager.c`, `src/communication_system.c`, `lib/gds`, `lib/ppwlobby` | local and online communications | implemented immediate-unavailable offline backend; menu integration pending |
 | ARM7 services | touch, RTC, CARD, sound, power APIs | delegated NDS system services | replace per service; never emulate ARM7 |
 | Overlays | `src/game_overlay.c`, `src/overlay_manager.c`, `platinum.us/main.lsf` | code loading and application lifecycle | implemented static registry and init/main/exit runner; template migration pending |
 | Fixed memory/registers | `src/boot.c`, `src/timer.c`, `include/constants/graphics.h` | ROM header, timers, VRAM and palettes | exclude boot policy; platform time and renderer resources |

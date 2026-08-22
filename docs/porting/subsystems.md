@@ -27,6 +27,6 @@ Classification describes logic reuse, not whether a file currently compiles with
 | SDAT engine/microphone | hardware-dependent | `src/sound_system.c`, `src/sound_chatot.c` | NDSP/conversion and later microphone service |
 | Overlay loader | hardware-dependent | `src/game_overlay.c` | static registry/no-op load bookkeeping |
 | Boot/cartridge/GBA migration | hardware-dependent | `src/boot.c`, `src/main_menu/gba_migrator.c` | exclude or redesign explicitly |
-| Local wireless/WFC | hardware-dependent | `src/wireless_manager.c`, `src/communication_system.c` | offline implementation initially |
+| Local wireless/WFC | hardware-dependent | `src/wireless_manager.c`, `src/communication_system.c` | offline policy implemented; route original entry points through it |
 | Obfuscated late overlays | unknown | `src/unk_*.c`, `src/overlay061/` through `src/overlay117/` | classify per feature before inclusion |
 | Host asset tools | mostly-independent | `tools/`, `res/meson.build` | retain as host-side pipeline |

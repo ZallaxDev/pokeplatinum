@@ -7,6 +7,7 @@
 #include "platform/filesystem.h"
 #include "platform/game_application.h"
 #include "platform/game_clock.h"
+#include "platform/game_communication.h"
 #include "platform/graphics.h"
 #include "platform/game_runtime.h"
 #include "platform/game_task.h"
@@ -463,7 +464,8 @@ static bool BuildLogicalGrid(PlatformScreen screen)
 static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *input,
     const char *lastInput, const PlatformTickScheduler *tickScheduler,
     const GameRuntime *gameRuntime, const BootstrapGameState *gameState,
-    const GameClockDateTime *clock, bool heapHierarchyReady)
+    const GameClockDateTime *clock, bool heapHierarchyReady,
+    const GameCommunicationResult *communicationResult)
 {
     unsigned long long elapsedMs = tickScheduler->elapsedNs / 1000000ULL;
     unsigned long long rateMilliHz = elapsedMs == 0
@@ -478,6 +480,10 @@ static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *
         "BOOT %s", platformReady ? "OK" : "FAILED");
     PlatformGraphics_DrawText(127.0f, 82.0f, 0.48f, PLATFORM_RGBA(220, 230, 255, 255),
         "Milestone BOOT-01");
+    PlatformGraphics_DrawText(105.0f, 68.0f, 0.34f, PLATFORM_RGBA(255, 205, 130, 255),
+        "Network: OFFLINE - %s",
+        communicationResult->status == GAME_COMMUNICATION_STATUS_UNAVAILABLE
+            ? "UNAVAILABLE" : "ERROR");
     PlatformGraphics_DrawText(52.0f, 112.0f, 0.42f, PLATFORM_RGBA(255, 255, 255, 255),
         "Last: %-10s  Touch: %3u,%3u %s", lastInput, input->touchX, input->touchY,
         input->touchHeld ? "DOWN" : "UP");
@@ -529,11 +535,23 @@ int main(void)
     };
     SaveSmokeRecord saveRecord;
     GameClockDateTime clock = { 0 };
+    GameCommunication communication;
+    GameCommunicationResult communicationResult;
     unsigned long long frame = 0;
     size_t smokeSize = 0;
     const char *lastInput = "NONE";
     bool heapHierarchyReady;
     bool platformReady = Platform_Init();
+
+    if (!GameCommunication_InitOffline(&communication)
+        || !GameCommunication_Probe(&communication,
+            GAME_COMMUNICATION_LOCAL_WIRELESS, &communicationResult)) {
+        Debug_Error("OFFLINE BACKEND FAILED");
+        platformReady = false;
+    } else {
+        Debug_Log("NETWORK PROBE: %s", communicationResult.message);
+        Debug_Log("OFFLINE BACKEND OK");
+    }
 
     if (platformReady && GameClock_Read(&clock)) {
         Debug_Log("RTC %04u-%02u-%02u %02u:%02u:%02u", clock.year,
@@ -652,7 +670,8 @@ int main(void)
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_TOP);
         PlatformGraphics_DrawSpriteTest();
         RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler,
-            &gameRuntime, &gameState, &clock, heapHierarchyReady);
+            &gameRuntime, &gameState, &clock, heapHierarchyReady,
+            &communicationResult);
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_BOTTOM);
         Debug_Render(frame, lastInput, tickScheduler.tickCount, tickScheduler.elapsedNs);
         Platform_WaitForFrame();

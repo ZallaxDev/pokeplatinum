@@ -19,4 +19,4 @@
 | `DC_FlushRange`, `DC_InvalidateRange` | graphics/audio/wireless | device coherency | backend-specific synchronization | pending |
 | `FS_LoadOverlay*` | `src/game_overlay.c` | dynamic code modules | static application registry | registry and multiframe init/main/exit runner implemented; real templates pending |
 | `PM_*`, lid/reset APIs | `src/main.c`, `src/system.c` | power policy | libctru lifecycle or explicit no-op policy | pending |
-| `WM_*`, DWC, NitroWiFi | communications modules | networking | explicit offline backend | pending |
+| `WM_*`, DWC, NitroWiFi | communications modules | networking | synchronous offline backend | local/WFC/GTS/Mystery Gift probes implemented; menu callers pending |

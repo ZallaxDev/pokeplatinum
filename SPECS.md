@@ -103,7 +103,7 @@ There is no ARM7 emulation. Touch, RTC, power, audio, microphone, save, and comm
 
 ## Communications
 
-Nintendo WFC and local NDS wireless are outside the first playable port. One offline backend must make unavailable paths fail cleanly, show an understandable message, and never hang. Deferred functions are tracked in `docs/porting/stubs.md`.
+Nintendo WFC and local NDS wireless are outside the first playable port. One synchronous offline backend handles local wireless, Nintendo WFC, GTS, and Mystery Gift probes. Every valid probe returns the terminal `UNAVAILABLE` status and the same understandable message immediately; it never reports a pending operation. This is intentional unsupported behavior rather than a temporary stub. Deferred functions are tracked in `docs/porting/stubs.md`.
 
 ## Debug And Errors
 
