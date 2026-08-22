@@ -35,7 +35,7 @@ Old 3DS, Old 3DS XL, New 3DS, New 3DS XL, New 2DS XL, and 2DS are targets. The b
 
 Game logic calls platform interfaces for lifecycle, input, time, files, save, memory, graphics, audio, and diagnostics. libctru/Citro2D/Citro3D/NDSP calls stay in `platform/3ds/` or a narrow integration boundary. Repeated `#ifdef __3DS__` branches in gameplay code are not accepted.
 
-The NDS `NitroMain` loop will be split conceptually into game initialization, one logical frame, and shutdown. A 3DS entry point owns `aptMainLoop()`, platform events, presentation, and controlled development exit.
+The NDS `NitroMain` loop is represented on the portable side by explicit game initialization, one logical frame, and idempotent shutdown hooks. The 3DS entry point owns `aptMainLoop()`, platform events, presentation, and controlled development exit; each scheduler tick invokes exactly one game frame. The bootstrap hooks currently count frames, and later runtime units replace their bodies without taking ownership of the platform loop.
 
 ## Screen And Coordinates
 

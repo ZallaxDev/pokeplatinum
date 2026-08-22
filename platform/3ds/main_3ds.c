@@ -6,6 +6,7 @@
 #include "platform/debug.h"
 #include "platform/filesystem.h"
 #include "platform/graphics.h"
+#include "platform/game_runtime.h"
 #include "platform/input.h"
 #include "platform/memory.h"
 #include "platform/nitro2d.h"
@@ -34,6 +35,31 @@ static unsigned char sGeneratedNarc[GENERATED_NARC_CAPACITY];
 static size_t sGeneratedNarcSize;
 static unsigned char *sIconNarc;
 static uint32_t sIconPixels[32 * 32];
+
+typedef struct BootstrapGameState {
+    uint64_t updateCount;
+} BootstrapGameState;
+
+static bool BootstrapGame_Init(void *context)
+{
+    BootstrapGameState *state = context;
+    state->updateCount = 0;
+    Debug_Log("GAME INIT OK");
+    return true;
+}
+
+static bool BootstrapGame_Frame(void *context)
+{
+    BootstrapGameState *state = context;
+    state->updateCount++;
+    return true;
+}
+
+static void BootstrapGame_Shutdown(void *context)
+{
+    BootstrapGameState *state = context;
+    Debug_Log("GAME SHUTDOWN %llu", (unsigned long long)state->updateCount);
+}
 
 static const char *DescribeInput(uint32_t keys)
 {
@@ -260,7 +286,8 @@ static bool BuildLogicalGrid(PlatformScreen screen)
 }
 
 static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *input,
-    const char *lastInput, const PlatformTickScheduler *tickScheduler)
+    const char *lastInput, const PlatformTickScheduler *tickScheduler,
+    const GameRuntime *gameRuntime)
 {
     unsigned long long elapsedMs = tickScheduler->elapsedNs / 1000000ULL;
     unsigned long long rateMilliHz = elapsedMs == 0
@@ -279,7 +306,8 @@ static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *
         "Last: %-10s  Touch: %3u,%3u %s", lastInput, input->touchX, input->touchY,
         input->touchHeld ? "DOWN" : "UP");
     PlatformGraphics_DrawText(52.0f, 138.0f, 0.42f, PLATFORM_RGBA(255, 255, 255, 255),
-        "Ticks: %llu", tickScheduler->tickCount);
+        "Game: %llu  Ticks: %llu", (unsigned long long)GameRuntime_GetFrameCount(gameRuntime),
+        tickScheduler->tickCount);
     PlatformGraphics_DrawText(52.0f, 157.0f, 0.42f, PLATFORM_RGBA(255, 255, 255, 255),
         "Cadence: %llu.%03llu Hz", rateMilliHz / 1000ULL, rateMilliHz % 1000ULL);
     PlatformGraphics_DrawText(128.0f, 215.0f, 0.34f, PLATFORM_RGBA(190, 215, 235, 255),
@@ -297,13 +325,19 @@ int main(void)
     static unsigned char smokeData[256];
     PlatformInputState input = { 0 };
     PlatformTickScheduler tickScheduler;
+    BootstrapGameState gameState = { 0 };
+    GameRuntime gameRuntime;
+    const GameRuntimeHooks gameHooks = {
+        .init = BootstrapGame_Init,
+        .frame = BootstrapGame_Frame,
+        .shutdown = BootstrapGame_Shutdown,
+    };
     SaveSmokeRecord saveRecord;
     unsigned long long frame = 0;
     size_t smokeSize = 0;
     const char *lastInput = "NONE";
     bool platformReady = Platform_Init();
 
-    PlatformTickScheduler_Init(&tickScheduler);
     if (BuildLogicalGrid(PLATFORM_SCREEN_TOP)
         && BuildLogicalGrid(PLATFORM_SCREEN_BOTTOM)) {
         Debug_Log("SURFACE 256x192 -> 320x240");
@@ -350,9 +384,21 @@ int main(void)
     } else if (!InspectGeneratedNarc()) {
         Debug_Error("NARC PARSE FAILED");
     }
+    if (!GameRuntime_Init(&gameRuntime, &gameHooks, &gameState)) {
+        Debug_Error("GAME INIT FAILED");
+        platformReady = false;
+    }
+    PlatformTickScheduler_Init(&tickScheduler);
 
     while (Platform_MainLoop()) {
-        PlatformTickScheduler_Update(&tickScheduler);
+        uint32_t dueTicks = PlatformTickScheduler_Update(&tickScheduler);
+
+        for (uint32_t i = 0; i < dueTicks && GameRuntime_IsRunning(&gameRuntime); i++) {
+            if (!GameRuntime_RunFrame(&gameRuntime)) {
+                Debug_Error("GAME FRAME FAILED");
+                break;
+            }
+        }
         PlatformInput_Update(&input);
         if (input.pressed != 0) {
             lastInput = DescribeInput(input.pressed);
@@ -390,7 +436,7 @@ int main(void)
         PlatformGraphics_BeginFrame();
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_TOP);
         PlatformGraphics_DrawSpriteTest();
-        RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler);
+        RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler, &gameRuntime);
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_BOTTOM);
         Debug_Render(frame, lastInput, tickScheduler.tickCount, tickScheduler.elapsedNs);
         Platform_WaitForFrame();
@@ -401,6 +447,7 @@ int main(void)
         }
     }
 
+    GameRuntime_Shutdown(&gameRuntime);
     Platform_Shutdown();
     return 0;
 }

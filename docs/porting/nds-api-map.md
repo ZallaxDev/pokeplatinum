@@ -2,7 +2,7 @@
 
 | NDS API / abstraction | Current users | Purpose | 3DS replacement | Status |
 |---|---|---|---|---|
-| `NitroMain`, `OS_WaitIrq` | `src/main.c` | process entry and frame wait | `main`, `aptMainLoop`, presentation scheduler | bootstrap implemented; gameplay pending |
+| `NitroMain`, `OS_WaitIrq` | `src/main.c` | process entry and frame wait | `main`, `aptMainLoop`, game lifecycle, presentation scheduler | init/frame/shutdown boundary implemented; gameplay hooks pending |
 | `PAD_Read`, `TP_*` | `src/system.c`, `src/touch_pad.c` | buttons and touch | `PlatformInput` over libctru HID | bootstrap implemented |
 | `FS_*` | `src/system.c`, `src/narc.c` | files and NARC streams | `PlatformFile` over RomFS | exact-read and portable NARC parser implemented |
 | `CARD_*` | `src/savedata.c` | save flash | transactional `PlatformSave` file | storage base implemented; serializer pending |

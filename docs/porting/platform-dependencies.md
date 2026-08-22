@@ -4,7 +4,7 @@ This inventory identifies replacement boundaries; it is not permission to replac
 
 | Category | Representative current users | Observable purpose | 3DS direction |
 |---|---|---|---|
-| NitroSDK lifecycle | `src/main.c`, `src/system.c` | startup, frame loop, sleep, reset | libctru lifecycle plus game init/frame/shutdown |
+| NitroSDK lifecycle | `src/main.c`, `src/system.c` | startup, frame loop, sleep, reset | libctru lifecycle plus implemented portable init/frame/shutdown boundary |
 | GX/G2/BG | `src/gx_layers.c`, `src/bg_window.c` | display modes, tile backgrounds, windows | renderer state interpreted by Citro2D/Citro3D |
 | OBJ/OAM | `src/render_oam.c`, `src/sprite*.c` | sprite allocation, transform, priority | logical sprite batches, no physical OAM emulation |
 | VRAM/palettes | `src/system.c`, `src/vram_transfer.c`, `src/graphics.c` | texture, tile, model, and palette storage | CPU resources plus explicit GPU uploads |

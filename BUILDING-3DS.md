@@ -43,6 +43,14 @@ make 3ds DEBUG=1
 
 The NDS build directory must remain configured. The 3DS target invokes Ninja for its allowlisted generated resources, then stages those files in the ignored mode-specific build directory used as RomFS.
 
+Run the portable lifecycle smoke test independently with:
+
+```bash
+make check-3ds-host
+```
+
+The test initializes the game boundary once, executes exactly 120 logical frames, shuts down once, and rejects frames after shutdown. It also runs automatically during `make 3ds`.
+
 To build the deliberate fatal-screen smoke test:
 
 ```sh

@@ -3,6 +3,7 @@
 	3ds           \
 	all           \
 	check         \
+	check-3ds-host \
 	clean         \
 	clean-3ds     \
 	configure     \
@@ -97,6 +98,9 @@ all: release check
 
 3ds:
 	$(MAKE) -f platform/3ds/Makefile DEBUG=$(DEBUG) FATAL_SMOKE=$(FATAL_SMOKE)
+
+check-3ds-host:
+	$(MAKE) -f platform/3ds/Makefile host-runtime-smoke DEBUG=1 FATAL_SMOKE=0
 
 clean-3ds:
 	$(MAKE) -f platform/3ds/Makefile clean

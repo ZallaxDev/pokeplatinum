@@ -18,4 +18,5 @@
 | Logical screen surfaces | Pass | BOOT-01 debug `33ac2372...006adb` | `256x192` pixel grids scale nearest to `320x240`; top centered at x=40 | Overlay reports `SURFACE TEST OK` |
 | Texture and sprite submission | Pass | BOOT-01 debug `7cb13497...b4074f` | Four procedural RGBA sprites render with independent transforms; fourth blends at 45% alpha | Overlay reports `SPRITE TEST OK` |
 | Platinum 2D asset decode | Pass | BOOT-01 debug `288870ce...64408c` | Turtwig NCGR member 394 renders `32x32` with shared NCLR palette bank 1 and transparency | Overlay reports `PLATINUM ASSET OK` |
+| Game lifecycle boundary | Pass | BOOT-01 debug `e752fe7e...36034d` | Host smoke: init=1, frames=120, shutdown=1; Azahar game frames track ticks | Gameplay hook bodies not connected yet |
 | Gameplay | Not started | - | - | NDS runtime not linked yet |
