@@ -1,5 +1,5 @@
 ifneq ($(MAKECMDGOALS),clean)
-  ifneq ($(MAKECMDGOALS),host-runtime-smoke)
+  ifneq ($(MAKECMDGOALS),host-check)
     ifeq ($(strip $(DEVKITARM)),)
       $(error "DEVKITARM is not set. Install devkitPro 3ds-dev and export DEVKITPRO and DEVKITARM")
     endif
@@ -30,6 +30,7 @@ STATIC_ROMFS := platform/3ds/romfs
 GENERATED_EVO_NARC := build/res/pokemon/evo.narc
 GENERATED_ICON_NARC := build/res/pokemon/pl_poke_icon.narc
 HOST_RUNTIME_SMOKE := build-3ds-host/game_runtime_smoke
+HOST_TASK_SMOKE := build-3ds-host/game_task_smoke
 
 ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 CFLAGS := -g -Wall -Wextra -Werror -O2 -mword-relocations -ffunction-sections $(ARCH)
@@ -52,16 +53,16 @@ export APP_AUTHOR := pret contributors
 export _3DSXDEPS := $(OUTPUT).smdh
 export _3DSXFLAGS := --smdh=$(OUTPUT).smdh --romfs=$(ROMFS)
 
-CFILES := main_3ds.c platform_3ds.c input_3ds.c filesystem_3ds.c debug_3ds.c time_3ds.c save_3ds.c graphics_3ds.c memory.c archive.c nitro2d.c game_runtime.c
+CFILES := main_3ds.c platform_3ds.c input_3ds.c filesystem_3ds.c debug_3ds.c time_3ds.c save_3ds.c graphics_3ds.c memory.c archive.c nitro2d.c game_runtime.c game_task.c
 export OFILES := $(CFILES:.c=.o)
 export LD := $(CC)
 export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 	$(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
-.PHONY: all clean host-runtime-smoke
+.PHONY: all clean host-check host-runtime-smoke host-task-smoke
 
-all: host-runtime-smoke
+all: host-check
 	@mkdir -p $(BUILD) build
 	@ninja -C build res/pokemon/evo.narc res/pokemon/pl_poke_icon.narc
 	@rm -rf $(ROMFS)
@@ -78,6 +79,15 @@ host-runtime-smoke:
 		platform/common/game_runtime.c platform/tests/game_runtime_smoke.c \
 		-o $(HOST_RUNTIME_SMOKE)
 	@$(HOST_RUNTIME_SMOKE)
+
+host-task-smoke:
+	@mkdir -p $(dir $(HOST_TASK_SMOKE))
+	@$(HOST_CC) -std=c11 -Wall -Wextra -Werror -Iplatform/include \
+		platform/common/game_task.c platform/tests/game_task_smoke.c \
+		-o $(HOST_TASK_SMOKE)
+	@$(HOST_TASK_SMOKE)
+
+host-check: host-runtime-smoke host-task-smoke
 
 clean:
 	@rm -rf build-3ds-debug build-3ds-debug-fatal build-3ds-release \

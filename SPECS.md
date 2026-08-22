@@ -37,6 +37,8 @@ Game logic calls platform interfaces for lifecycle, input, time, files, save, me
 
 The NDS `NitroMain` loop is represented on the portable side by explicit game initialization, one logical frame, and idempotent shutdown hooks. The 3DS entry point owns `aptMainLoop()`, platform events, presentation, and controlled development exit; each scheduler tick invokes exactly one game frame. The bootstrap hooks currently count frames, and later runtime units replace their bodies without taking ownership of the platform loop.
 
+The portable task manager preserves ascending numeric priority, stable ordering for equal priorities, deferred first execution for tasks inserted at or after the current priority, and safe deletion during callbacks. Separate main, frame-boundary, print, and post-frame queues execute in that order for each logical game frame. Fixed-capacity task storage replaces implicit arena allocation at this boundary.
+
 ## Screen And Coordinates
 
 - Game top logical surface: 256x192.

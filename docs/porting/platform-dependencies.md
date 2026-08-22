@@ -11,7 +11,7 @@ This inventory identifies replacement boundaries; it is not permission to replac
 | 3D GX/NNS G3D | `src/g3d_pipeline.c`, `src/easy3d*.c`, `lib/spl/src/spl_draw.c` | field models, battle objects, particles | model/texture loaders and Citro3D draw backend |
 | DMA/cache | `MI_Dma*`, `DC_FlushRange`, `DC_InvalidateRange` users | copies and device coherency | CPU copies or backend-specific GPU/audio synchronization |
 | IRQ/VBlank/HBlank | `src/main.c`, `src/system.c`, `src/overlay005/hblank_system.c` | frame phases and scanline effects | frame scheduler; renderer-generated scanline effects |
-| OS/timers | `src/timer.c`, `src/sys_task_manager.c` | monotonic time and task execution | libctru clock plus portable scheduler |
+| OS/timers | `src/timer.c`, `src/sys_task_manager.c` | monotonic time and task execution | libctru clock, portable scheduler, and fixed-capacity priority task queues |
 | FS/NitroFS | `src/system.c`, `src/narc.c` | file and archive reads | relative `PlatformFile` paths backed by RomFS |
 | CARD | `src/savedata.c` | backup flash reads/writes | transactional save file backend |
 | RTC | `src/rtc.c` | game clock and daily events | 3DS wall clock plus retained calendar logic |

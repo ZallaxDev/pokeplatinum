@@ -91,8 +91,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 - [x] Replace the NDS infinite loop with init/frame/shutdown game boundaries.
   - Verify: a host smoke test executes a fixed number of game frames and exits cleanly.
   - Result: the portable lifecycle ran one init, exactly 120 frames, and one idempotent shutdown in `make check-3ds-host`; isolated Azahar advanced `Game` and scheduler `Ticks` in lockstep and START returned cleanly to the frontend.
-- [ ] Run the portable task manager on 3DS.
+- [x] Run the portable task manager on 3DS.
   - Verify: main, frame-boundary, print, and post-frame tasks increment separate visible counters in order.
+  - Result: isolated Azahar showed `M/B/P/A 434/434/434/434 OK` and `TASK PHASES M>B>P>A OK`; the host smoke also verified ascending priority, deferred insertion, and safe self-deletion under ASan/UBSan.
 - [ ] Replace dynamic NDS overlays with statically linked application registration.
   - Verify: switch between two test applications and show their init/main/exit sequence in debug.
 - [ ] Port RTC acquisition while preserving calendar calculations.

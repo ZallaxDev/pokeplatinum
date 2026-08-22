@@ -19,4 +19,5 @@
 | Texture and sprite submission | Pass | BOOT-01 debug `7cb13497...b4074f` | Four procedural RGBA sprites render with independent transforms; fourth blends at 45% alpha | Overlay reports `SPRITE TEST OK` |
 | Platinum 2D asset decode | Pass | BOOT-01 debug `288870ce...64408c` | Turtwig NCGR member 394 renders `32x32` with shared NCLR palette bank 1 and transparency | Overlay reports `PLATINUM ASSET OK` |
 | Game lifecycle boundary | Pass | BOOT-01 debug `e752fe7e...36034d` | Host smoke: init=1, frames=120, shutdown=1; Azahar game frames track ticks | Gameplay hook bodies not connected yet |
+| Portable task manager | Pass | BOOT-01 debug `b2c73f62...cd2a7b` | Main/boundary/print/after counters remain equal and ordered; host mutation smoke passes | Fixed capacity; game tasks not connected yet |
 | Gameplay | Not started | - | - | NDS runtime not linked yet |

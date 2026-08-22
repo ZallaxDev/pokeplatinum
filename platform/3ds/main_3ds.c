@@ -7,6 +7,7 @@
 #include "platform/filesystem.h"
 #include "platform/graphics.h"
 #include "platform/game_runtime.h"
+#include "platform/game_task.h"
 #include "platform/input.h"
 #include "platform/memory.h"
 #include "platform/nitro2d.h"
@@ -36,14 +37,61 @@ static size_t sGeneratedNarcSize;
 static unsigned char *sIconNarc;
 static uint32_t sIconPixels[32 * 32];
 
-typedef struct BootstrapGameState {
+enum BootstrapTaskPhase {
+    BOOTSTRAP_TASK_MAIN,
+    BOOTSTRAP_TASK_FRAME_BOUNDARY,
+    BOOTSTRAP_TASK_PRINT,
+    BOOTSTRAP_TASK_POST_FRAME,
+    BOOTSTRAP_TASK_PHASE_COUNT,
+};
+
+typedef struct BootstrapGameState BootstrapGameState;
+
+typedef struct BootstrapTaskContext {
+    BootstrapGameState *game;
+    enum BootstrapTaskPhase phase;
+} BootstrapTaskContext;
+
+struct BootstrapGameState {
     uint64_t updateCount;
-} BootstrapGameState;
+    uint64_t taskCounts[BOOTSTRAP_TASK_PHASE_COUNT];
+    GameTaskManager taskManagers[BOOTSTRAP_TASK_PHASE_COUNT];
+    BootstrapTaskContext taskContexts[BOOTSTRAP_TASK_PHASE_COUNT];
+    enum BootstrapTaskPhase expectedPhase;
+    bool taskOrderValid;
+    bool taskSmokeLogged;
+};
+
+static void BootstrapTask_Run(GameTask *task, void *context)
+{
+    BootstrapTaskContext *taskContext = context;
+    BootstrapGameState *game = taskContext->game;
+    (void)task;
+
+    if (taskContext->phase != game->expectedPhase) {
+        game->taskOrderValid = false;
+        return;
+    }
+    game->taskCounts[taskContext->phase]++;
+    game->expectedPhase = (enum BootstrapTaskPhase)(taskContext->phase + 1);
+}
 
 static bool BootstrapGame_Init(void *context)
 {
     BootstrapGameState *state = context;
     state->updateCount = 0;
+    state->expectedPhase = BOOTSTRAP_TASK_MAIN;
+    state->taskOrderValid = true;
+    state->taskSmokeLogged = false;
+    for (unsigned int i = 0; i < BOOTSTRAP_TASK_PHASE_COUNT; i++) {
+        state->taskContexts[i].game = state;
+        state->taskContexts[i].phase = (enum BootstrapTaskPhase)i;
+        if (!GameTaskManager_Init(&state->taskManagers[i], 4)
+            || GameTaskManager_Add(&state->taskManagers[i], BootstrapTask_Run,
+                &state->taskContexts[i], 0) == NULL) {
+            return false;
+        }
+    }
     Debug_Log("GAME INIT OK");
     return true;
 }
@@ -51,7 +99,20 @@ static bool BootstrapGame_Init(void *context)
 static bool BootstrapGame_Frame(void *context)
 {
     BootstrapGameState *state = context;
+    state->expectedPhase = BOOTSTRAP_TASK_MAIN;
+    for (unsigned int i = 0; i < BOOTSTRAP_TASK_PHASE_COUNT; i++) {
+        if (!GameTaskManager_Execute(&state->taskManagers[i])) {
+            return false;
+        }
+    }
+    if (!state->taskOrderValid || state->expectedPhase != BOOTSTRAP_TASK_PHASE_COUNT) {
+        return false;
+    }
     state->updateCount++;
+    if (!state->taskSmokeLogged) {
+        Debug_Log("TASK PHASES M>B>P>A OK");
+        state->taskSmokeLogged = true;
+    }
     return true;
 }
 
@@ -287,7 +348,7 @@ static bool BuildLogicalGrid(PlatformScreen screen)
 
 static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *input,
     const char *lastInput, const PlatformTickScheduler *tickScheduler,
-    const GameRuntime *gameRuntime)
+    const GameRuntime *gameRuntime, const BootstrapGameState *gameState)
 {
     unsigned long long elapsedMs = tickScheduler->elapsedNs / 1000000ULL;
     unsigned long long rateMilliHz = elapsedMs == 0
@@ -310,6 +371,13 @@ static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *
         tickScheduler->tickCount);
     PlatformGraphics_DrawText(52.0f, 157.0f, 0.42f, PLATFORM_RGBA(255, 255, 255, 255),
         "Cadence: %llu.%03llu Hz", rateMilliHz / 1000ULL, rateMilliHz % 1000ULL);
+    PlatformGraphics_DrawText(52.0f, 96.0f, 0.38f, PLATFORM_RGBA(180, 240, 210, 255),
+        "M/B/P/A %llu/%llu/%llu/%llu %s",
+        (unsigned long long)gameState->taskCounts[BOOTSTRAP_TASK_MAIN],
+        (unsigned long long)gameState->taskCounts[BOOTSTRAP_TASK_FRAME_BOUNDARY],
+        (unsigned long long)gameState->taskCounts[BOOTSTRAP_TASK_PRINT],
+        (unsigned long long)gameState->taskCounts[BOOTSTRAP_TASK_POST_FRAME],
+        gameState->taskOrderValid ? "OK" : "BAD");
     PlatformGraphics_DrawText(128.0f, 215.0f, 0.34f, PLATFORM_RGBA(190, 215, 235, 255),
         "TURTWIG x4   ALPHA: #4");
     PlatformGraphics_DrawText(83.0f, 228.0f, 0.28f, PLATFORM_RGBA(180, 200, 220, 255),
@@ -325,7 +393,7 @@ int main(void)
     static unsigned char smokeData[256];
     PlatformInputState input = { 0 };
     PlatformTickScheduler tickScheduler;
-    BootstrapGameState gameState = { 0 };
+    static BootstrapGameState gameState;
     GameRuntime gameRuntime;
     const GameRuntimeHooks gameHooks = {
         .init = BootstrapGame_Init,
@@ -436,7 +504,8 @@ int main(void)
         PlatformGraphics_BeginFrame();
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_TOP);
         PlatformGraphics_DrawSpriteTest();
-        RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler, &gameRuntime);
+        RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler,
+            &gameRuntime, &gameState);
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_BOTTOM);
         Debug_Render(frame, lastInput, tickScheduler.tickCount, tickScheduler.elapsedNs);
         Platform_WaitForFrame();
