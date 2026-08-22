@@ -97,7 +97,7 @@ The port preserves layouts and alignment where gameplay or serialized data requi
 
 ## Overlays And ARM7
 
-NDS overlays become statically linked code modules while preserving `ApplicationManager` init/main/exit behavior. A lightweight registry/bookkeeping layer replaces binary load/unload; no dynamic linker is planned.
+NDS overlays become statically linked code modules while preserving `ApplicationManager` init/main/exit behavior, including callbacks that span multiple frames. A validated registry maps stable application IDs to linked templates, and a runner owns the current/pending application and procedure state. Queueing changes bookkeeping only; no binary load/unload or dynamic linker is used.
 
 There is no ARM7 emulation. Touch, RTC, power, audio, microphone, save, and communications services are replaced with 3DS services or explicit unsupported behavior.
 

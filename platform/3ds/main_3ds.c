@@ -5,6 +5,7 @@
 #include "platform/archive.h"
 #include "platform/debug.h"
 #include "platform/filesystem.h"
+#include "platform/game_application.h"
 #include "platform/graphics.h"
 #include "platform/game_runtime.h"
 #include "platform/game_task.h"
@@ -45,6 +46,11 @@ enum BootstrapTaskPhase {
     BOOTSTRAP_TASK_PHASE_COUNT,
 };
 
+enum BootstrapApplicationId {
+    BOOTSTRAP_APPLICATION_ALPHA = 1,
+    BOOTSTRAP_APPLICATION_BETA = 2,
+};
+
 typedef struct BootstrapGameState BootstrapGameState;
 
 typedef struct BootstrapTaskContext {
@@ -57,9 +63,67 @@ struct BootstrapGameState {
     uint64_t taskCounts[BOOTSTRAP_TASK_PHASE_COUNT];
     GameTaskManager taskManagers[BOOTSTRAP_TASK_PHASE_COUNT];
     BootstrapTaskContext taskContexts[BOOTSTRAP_TASK_PHASE_COUNT];
+    GameApplicationRegistry applicationRegistry;
+    GameApplicationRunner applicationRunner;
+    uint64_t applicationSwitchCount;
     enum BootstrapTaskPhase expectedPhase;
     bool taskOrderValid;
     bool taskSmokeLogged;
+};
+
+static bool BootstrapApplication_Init(GameApplicationRunner *runner,
+    void *context, int *state)
+{
+    (void)context;
+    (void)state;
+    Debug_Log("APP %s INIT", GameApplicationRunner_GetCurrentName(runner));
+    return true;
+}
+
+static bool BootstrapApplication_Main(GameApplicationRunner *runner,
+    void *context, int *state)
+{
+    (void)context;
+    if (*state == 0) {
+        Debug_Log("APP %s MAIN", GameApplicationRunner_GetCurrentName(runner));
+    }
+    (*state)++;
+    return *state >= 60;
+}
+
+static bool BootstrapApplication_Exit(GameApplicationRunner *runner,
+    void *context, int *state)
+{
+    BootstrapGameState *game = context;
+    uint32_t currentId = GameApplicationRunner_GetCurrentId(runner);
+    uint32_t nextId = currentId == BOOTSTRAP_APPLICATION_ALPHA
+        ? BOOTSTRAP_APPLICATION_BETA
+        : BOOTSTRAP_APPLICATION_ALPHA;
+    (void)state;
+
+    Debug_Log("APP %s EXIT", GameApplicationRunner_GetCurrentName(runner));
+    if (!GameApplicationRunner_Queue(runner, nextId)) {
+        return false;
+    }
+    game->applicationSwitchCount++;
+    return true;
+}
+
+static const GameApplicationTemplate sBootstrapApplications[] = {
+    {
+        BOOTSTRAP_APPLICATION_ALPHA,
+        "ALPHA",
+        BootstrapApplication_Init,
+        BootstrapApplication_Main,
+        BootstrapApplication_Exit,
+    },
+    {
+        BOOTSTRAP_APPLICATION_BETA,
+        "BETA",
+        BootstrapApplication_Init,
+        BootstrapApplication_Main,
+        BootstrapApplication_Exit,
+    },
 };
 
 static void BootstrapTask_Run(GameTask *task, void *context)
@@ -83,6 +147,7 @@ static bool BootstrapGame_Init(void *context)
     state->expectedPhase = BOOTSTRAP_TASK_MAIN;
     state->taskOrderValid = true;
     state->taskSmokeLogged = false;
+    state->applicationSwitchCount = 0;
     for (unsigned int i = 0; i < BOOTSTRAP_TASK_PHASE_COUNT; i++) {
         state->taskContexts[i].game = state;
         state->taskContexts[i].phase = (enum BootstrapTaskPhase)i;
@@ -92,6 +157,15 @@ static bool BootstrapGame_Init(void *context)
             return false;
         }
     }
+    if (!GameApplicationRegistry_Init(&state->applicationRegistry,
+            sBootstrapApplications,
+            sizeof(sBootstrapApplications) / sizeof(sBootstrapApplications[0]))
+        || !GameApplicationRunner_Init(&state->applicationRunner,
+            &state->applicationRegistry, state)
+        || !GameApplicationRunner_Queue(&state->applicationRunner,
+            BOOTSTRAP_APPLICATION_ALPHA)) {
+        return false;
+    }
     Debug_Log("GAME INIT OK");
     return true;
 }
@@ -99,6 +173,9 @@ static bool BootstrapGame_Init(void *context)
 static bool BootstrapGame_Frame(void *context)
 {
     BootstrapGameState *state = context;
+    if (!GameApplicationRunner_RunFrame(&state->applicationRunner)) {
+        return false;
+    }
     state->expectedPhase = BOOTSTRAP_TASK_MAIN;
     for (unsigned int i = 0; i < BOOTSTRAP_TASK_PHASE_COUNT; i++) {
         if (!GameTaskManager_Execute(&state->taskManagers[i])) {
@@ -366,6 +443,10 @@ static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *
     PlatformGraphics_DrawText(52.0f, 112.0f, 0.42f, PLATFORM_RGBA(255, 255, 255, 255),
         "Last: %-10s  Touch: %3u,%3u %s", lastInput, input->touchX, input->touchY,
         input->touchHeld ? "DOWN" : "UP");
+    PlatformGraphics_DrawText(52.0f, 125.0f, 0.34f, PLATFORM_RGBA(255, 225, 150, 255),
+        "App: %s  switches: %llu",
+        GameApplicationRunner_GetCurrentName(&gameState->applicationRunner),
+        (unsigned long long)gameState->applicationSwitchCount);
     PlatformGraphics_DrawText(52.0f, 138.0f, 0.42f, PLATFORM_RGBA(255, 255, 255, 255),
         "Game: %llu  Ticks: %llu", (unsigned long long)GameRuntime_GetFrameCount(gameRuntime),
         tickScheduler->tickCount);

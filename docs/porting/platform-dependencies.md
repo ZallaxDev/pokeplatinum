@@ -19,7 +19,7 @@ This inventory identifies replacement boundaries; it is not permission to replac
 | Sound/microphone | `src/sound_system.c`, `src/sound_chatot.c` | SDAT playback and Chatot recording | NDSP pipeline; microphone deferred separately |
 | Wireless/WFC | `src/wireless_manager.c`, `src/communication_system.c`, `lib/gds`, `lib/ppwlobby` | local and online communications | explicit offline backend for first playable port |
 | ARM7 services | touch, RTC, CARD, sound, power APIs | delegated NDS system services | replace per service; never emulate ARM7 |
-| Overlays | `src/game_overlay.c`, `src/overlay_manager.c`, `platinum.us/main.lsf` | code loading and application lifecycle | static link plus application registry/bookkeeping |
+| Overlays | `src/game_overlay.c`, `src/overlay_manager.c`, `platinum.us/main.lsf` | code loading and application lifecycle | implemented static registry and init/main/exit runner; template migration pending |
 | Fixed memory/registers | `src/boot.c`, `src/timer.c`, `include/constants/graphics.h` | ROM header, timers, VRAM and palettes | exclude boot policy; platform time and renderer resources |
 | Cache/arenas/heaps | `src/heap.c`, `src/system.c` | allocation hierarchy and direction | portable allocator preserving required semantics |
 

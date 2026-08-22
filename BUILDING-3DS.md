@@ -49,7 +49,7 @@ Run the portable lifecycle smoke test independently with:
 make check-3ds-host
 ```
 
-The host checks initialize the game boundary once, execute exactly 120 logical frames, shut down once, and reject frames after shutdown. They also verify task priority, deferred insertion, and safe deletion during callbacks. Both tests run automatically during `make 3ds`.
+The host checks initialize the game boundary once, execute exactly 120 logical frames, shut down once, and reject frames after shutdown. They also verify task priority and mutation safety, plus the complete init/main/exit sequence while switching between two statically registered applications. All tests run automatically during `make 3ds`.
 
 To build the deliberate fatal-screen smoke test:
 
