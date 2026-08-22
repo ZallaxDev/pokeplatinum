@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "platform/archive.h"
 #include "platform/debug.h"
 #include "platform/filesystem.h"
 #include "platform/input.h"
@@ -23,6 +24,7 @@ typedef struct SaveSmokeRecord {
 } SaveSmokeRecord;
 
 static unsigned char sGeneratedNarc[GENERATED_NARC_CAPACITY];
+static size_t sGeneratedNarcSize;
 
 static const char *DescribeInput(uint32_t keys)
 {
@@ -128,9 +130,36 @@ static bool LoadGeneratedNarc(void)
         return false;
     }
     checksum = Fnv1a(sGeneratedNarc, narcSize);
+    sGeneratedNarcSize = narcSize;
     Debug_Log("NARC evo %u bytes", (unsigned int)narcSize);
     Debug_Log("NARC FNV-1a %08lx", (unsigned long)checksum);
     Debug_Log("NARC EXPORT OK");
+    return true;
+}
+
+static bool InspectGeneratedNarc(void)
+{
+    PlatformNarc archive;
+    const void *member;
+    size_t firstSize;
+    size_t middleSize;
+    size_t lastSize;
+    uint16_t count;
+
+    if (!PlatformNarc_Open(&archive, sGeneratedNarc, sGeneratedNarcSize)) {
+        return false;
+    }
+    count = PlatformNarc_GetMemberCount(&archive);
+    if (count == 0
+        || !PlatformNarc_GetMember(&archive, 0, &member, &firstSize)
+        || !PlatformNarc_GetMember(&archive, count / 2, &member, &middleSize)
+        || !PlatformNarc_GetMember(&archive, count - 1, &member, &lastSize)) {
+        return false;
+    }
+    Debug_Log("NARC members %u", count);
+    Debug_Log("NARC sizes %u/%u/%u", (unsigned int)firstSize,
+        (unsigned int)middleSize, (unsigned int)lastSize);
+    Debug_Log("NARC PARSE OK");
     return true;
 }
 
@@ -189,6 +218,8 @@ int main(void)
     }
     if (!LoadGeneratedNarc()) {
         Debug_Error("GENERATED NARC FAILED");
+    } else if (!InspectGeneratedNarc()) {
+        Debug_Error("NARC PARSE FAILED");
     }
 
     while (Platform_MainLoop()) {

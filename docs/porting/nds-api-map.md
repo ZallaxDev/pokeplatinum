@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | `NitroMain`, `OS_WaitIrq` | `src/main.c` | process entry and frame wait | `main`, `aptMainLoop`, presentation scheduler | bootstrap implemented; gameplay pending |
 | `PAD_Read`, `TP_*` | `src/system.c`, `src/touch_pad.c` | buttons and touch | `PlatformInput` over libctru HID | bootstrap implemented |
-| `FS_*` | `src/system.c`, `src/narc.c` | files and NARC streams | `PlatformFile` over RomFS | exact-read bootstrap implemented |
+| `FS_*` | `src/system.c`, `src/narc.c` | files and NARC streams | `PlatformFile` over RomFS | exact-read and portable NARC parser implemented |
 | `CARD_*` | `src/savedata.c` | save flash | transactional `PlatformSave` file | storage base implemented; serializer pending |
 | `OS_TIMER_3`, timer registers | `src/timer.c` | monotonic timing | platform monotonic ticks | bootstrap scheduler implemented; gameplay pending |
 | `RTC_*` | `src/rtc.c` | wall clock | 3DS system time service | pending |

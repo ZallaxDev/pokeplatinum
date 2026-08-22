@@ -13,4 +13,5 @@
 | Portable heap base | Pass | BOOT-01 debug `ecf0ea22...08e8a3` | Overlay reports `HEAP TEST OK` for three IDs and alignments | Game hierarchy/direction not connected yet |
 | Transactional save base | Pass | BOOT-01 debug `086ac4d8...8c3b9f6` | Interrupted stage retained old value; committed value survived restart | Smoke record only; game serializer not connected |
 | Generated NARC export | Pass | BOOT-01 debug `46ec493e...37c53b` | `evo.narc`: 26,468 bytes, FNV-1a `a955d414` | Source artifact SHA-256 `fe6e4ec4...7862d` |
+| Portable NARC parser | Pass | BOOT-01 debug `b9889e5c...72adb3` | 508 members; sampled sizes `44/44/44`; `NARC PARSE OK` | Validates all member ranges |
 | Gameplay | Not started | - | - | NDS runtime not linked yet |
