@@ -58,8 +58,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 - [x] Add monotonic time and fixed game-tick scheduling.
   - Verify: overlay reports stable game ticks at the original logical cadence for ten minutes.
   - Result: the ARM11 monotonic counter and `59.8261 Hz` rational scheduler ran for approximately 622.5 seconds in isolated Azahar; the overlay reported 37,243 ticks at 59.825 Hz versus 37,246 presentation frames.
-- [ ] Add a portable heap backend.
+- [x] Add a portable heap backend.
   - Verify: allocate, align, write, read, and free from representative heap IDs; overlay reports `HEAP TEST OK`.
+  - Result: isolated Azahar displayed `HEAP TEST OK` after exercising SYSTEM, DEBUG, and APPLICATION heaps with 8-, 32-, and 64-byte alignment, data patterns, ownership metadata, counters, free, and destroy.
 - [ ] Add file-backed save storage with atomic replacement.
   - Verify: write a test value, restart the `.3dsx`, and recover the same value after a forced interruption test.
 

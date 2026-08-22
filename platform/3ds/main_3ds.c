@@ -1,9 +1,11 @@
 #include <3ds.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "platform/debug.h"
 #include "platform/filesystem.h"
 #include "platform/input.h"
+#include "platform/memory.h"
 #include "platform/platform.h"
 #include "platform/time.h"
 
@@ -33,6 +35,48 @@ static uint32_t Fnv1a(const unsigned char *data, size_t size)
         hash *= 16777619u;
     }
     return hash;
+}
+
+static bool RunHeapSmokeTest(void)
+{
+    static const struct {
+        uint32_t heapId;
+        size_t capacity;
+        size_t size;
+        size_t alignment;
+        unsigned char pattern;
+    } tests[] = {
+        { PLATFORM_HEAP_SYSTEM, 4096, 257, 8, 0x31 },
+        { PLATFORM_HEAP_DEBUG, 2048, 193, 32, 0xA5 },
+        { PLATFORM_HEAP_APPLICATION, 8192, 1025, 64, 0x5A },
+    };
+    void *allocations[sizeof(tests) / sizeof(tests[0])] = { 0 };
+    bool passed = true;
+
+    for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+        passed &= PlatformHeap_Create(tests[i].heapId, tests[i].capacity);
+        allocations[i] = PlatformHeap_Alloc(tests[i].heapId, tests[i].size, tests[i].alignment);
+        passed = passed && allocations[i] != NULL
+            && ((uintptr_t)allocations[i] % tests[i].alignment) == 0;
+        if (allocations[i] != NULL) {
+            memset(allocations[i], tests[i].pattern, tests[i].size);
+            const unsigned char *bytes = allocations[i];
+            passed = passed && bytes[0] == tests[i].pattern
+                && bytes[tests[i].size / 2] == tests[i].pattern
+                && bytes[tests[i].size - 1] == tests[i].pattern;
+        }
+        passed = passed
+            && PlatformHeap_GetAllocatedSize(tests[i].heapId) == tests[i].size
+            && PlatformHeap_GetAllocationCount(tests[i].heapId) == 1;
+    }
+
+    for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+        passed &= PlatformHeap_Free(tests[i].heapId, allocations[i]);
+        passed = passed && PlatformHeap_GetAllocatedSize(tests[i].heapId) == 0
+            && PlatformHeap_GetAllocationCount(tests[i].heapId) == 0;
+        passed &= PlatformHeap_Destroy(tests[i].heapId);
+    }
+    return passed;
 }
 
 int main(void)
@@ -73,6 +117,11 @@ int main(void)
             (unsigned long)Fnv1a(smokeData, smokeSize));
     } else {
         Debug_Error("RomFS smoke read failed");
+    }
+    if (RunHeapSmokeTest()) {
+        Debug_Log("HEAP TEST OK");
+    } else {
+        Debug_Error("HEAP TEST FAILED");
     }
 
     while (Platform_MainLoop()) {

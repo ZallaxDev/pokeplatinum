@@ -21,7 +21,7 @@ ifeq ($(DEBUG),1)
 else
 BUILD := build-3ds-release
 endif
-SOURCES := platform/3ds
+SOURCES := platform/3ds platform/common
 INCLUDES := platform/include
 ROMFS := platform/3ds/romfs
 
@@ -46,7 +46,7 @@ export APP_AUTHOR := pret contributors
 export _3DSXDEPS := $(OUTPUT).smdh
 export _3DSXFLAGS := --smdh=$(OUTPUT).smdh --romfs=$(ROMFS)
 
-CFILES := main_3ds.c platform_3ds.c input_3ds.c filesystem_3ds.c debug_3ds.c time_3ds.c
+CFILES := main_3ds.c platform_3ds.c input_3ds.c filesystem_3ds.c debug_3ds.c time_3ds.c memory.c
 export OFILES := $(CFILES:.c=.o)
 export LD := $(CC)
 export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
