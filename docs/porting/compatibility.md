@@ -25,4 +25,5 @@
 | Game heap hierarchy | Pass | BOOT-01 debug `80e50ef...0f70fd` | Azahar reports `LOW/HIGH OK`; host and sanitizer verify child arenas, alignment, direction, reuse, and destroy guards | Original heap callers not connected yet |
 | Offline communications | Pass | BOOT-01 debug `1f74a0e0...8364b8` | Azahar displays `OFFLINE - UNAVAILABLE`; host and sanitizer return four terminal results immediately | Original networking menus not connected yet |
 | DS text backgrounds | Pass | BOOT-01 debug `0cc10b63...0b6d7` | Clean Azahar preview matches the Underground NSCR map/grid/panel; host and sanitizer verify palette banks and H/V flips | 4bpp text mode; affine and 8bpp maps pending |
+| Field dialogue UI | Pass | BOOT-01 debug `4c85f4db...56f48a` | Azahar renders real entry 88 with default frame/font, authored wrap, color span, timed reveal, and fade in/out | Paging, substitutions, scrolling, and shaped fades pending |
 | Gameplay | Not started | - | - | NDS runtime not linked yet |

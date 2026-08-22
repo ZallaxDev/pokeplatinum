@@ -313,6 +313,14 @@ void PlatformGraphics_DrawText(float x, float y, float scale, uint32_t color,
     C2D_DrawText(&text, C2D_WithColor, x, y, 0.0f, scale, scale, color);
 }
 
+void PlatformGraphics_DrawTopFade(uint8_t alpha)
+{
+    if (!sFrameActive || alpha == 0) return;
+    PlatformGraphics_BeginScreen(PLATFORM_SCREEN_TOP);
+    C2D_DrawRectSolid(0.0f, 0.0f, 1.0f, 400.0f, 240.0f,
+        C2D_Color32(0, 0, 0, alpha));
+}
+
 void PlatformGraphics_EndFrame(void)
 {
     if (!sFrameActive) {

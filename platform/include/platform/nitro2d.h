@@ -27,6 +27,8 @@ typedef struct PlatformNscr {
 
 bool PlatformNcgr_Open(PlatformNcgr *image, const void *data, size_t size);
 bool PlatformNclr_Open(PlatformNclr *palette, const void *data, size_t size);
+bool PlatformNclr_GetColor(const PlatformNclr *palette, size_t colorIndex,
+    bool transparent, uint32_t *color);
 bool PlatformNscr_Open(PlatformNscr *screen, const void *data, size_t size);
 bool PlatformNitro2D_DecodeTiles4Bpp(const PlatformNcgr *image,
     const PlatformNclr *palette, unsigned int paletteBank, unsigned int firstTile,

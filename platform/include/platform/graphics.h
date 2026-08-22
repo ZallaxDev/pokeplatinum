@@ -28,6 +28,7 @@ bool PlatformGraphics_SetSpriteTexture(const uint32_t *pixels, unsigned int widt
 void PlatformGraphics_DrawSpriteTest(void);
 void PlatformGraphics_DrawText(float x, float y, float scale, uint32_t color,
     const char *format, ...);
+void PlatformGraphics_DrawTopFade(uint8_t alpha);
 void PlatformGraphics_EndFrame(void);
 
 #endif

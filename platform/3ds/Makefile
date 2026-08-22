@@ -30,6 +30,9 @@ STATIC_ROMFS := platform/3ds/romfs
 GENERATED_EVO_NARC := build/res/pokemon/evo.narc
 GENERATED_ICON_NARC := build/res/pokemon/pl_poke_icon.narc
 GENERATED_UNDERGROUND_BG_NARC := build/res/graphics/underground_top_screen/underground_top_screen.narc
+GENERATED_MESSAGE_NARC := build/res/text/pl_msg.narc
+GENERATED_FONT_NARC := build/res/fonts/pl_font.narc
+GENERATED_WINDOW_NARC := build/res/graphics/windows/pl_winframe.narc
 HOST_RUNTIME_SMOKE := build-3ds-host/game_runtime_smoke
 HOST_TASK_SMOKE := build-3ds-host/game_task_smoke
 HOST_APPLICATION_SMOKE := build-3ds-host/game_application_smoke
@@ -37,6 +40,7 @@ HOST_CLOCK_SMOKE := build-3ds-host/game_clock_smoke
 HOST_MEMORY_SMOKE := build-3ds-host/memory_smoke
 HOST_COMMUNICATION_SMOKE := build-3ds-host/game_communication_smoke
 HOST_NITRO2D_SMOKE := build-3ds-host/nitro2d_smoke
+HOST_UI_SMOKE := build-3ds-host/game_ui_smoke
 
 ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 CFLAGS := -g -Wall -Wextra -Werror -O2 -mword-relocations -ffunction-sections $(ARCH)
@@ -59,24 +63,27 @@ export APP_AUTHOR := pret contributors
 export _3DSXDEPS := $(OUTPUT).smdh
 export _3DSXFLAGS := --smdh=$(OUTPUT).smdh --romfs=$(ROMFS)
 
-CFILES := main_3ds.c platform_3ds.c input_3ds.c filesystem_3ds.c debug_3ds.c time_3ds.c game_clock_3ds.c save_3ds.c graphics_3ds.c memory.c archive.c nitro2d.c game_runtime.c game_task.c game_application.c game_clock.c game_communication.c
+CFILES := main_3ds.c platform_3ds.c input_3ds.c filesystem_3ds.c debug_3ds.c time_3ds.c game_clock_3ds.c save_3ds.c graphics_3ds.c memory.c archive.c nitro2d.c game_runtime.c game_task.c game_application.c game_clock.c game_communication.c game_ui.c game_fade.c
 export OFILES := $(CFILES:.c=.o)
 export LD := $(CC)
 export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 	$(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
-.PHONY: all clean host-application-smoke host-check host-clock-smoke host-communication-smoke host-memory-smoke host-nitro2d-smoke host-runtime-smoke host-task-smoke
+.PHONY: all clean host-application-smoke host-check host-clock-smoke host-communication-smoke host-memory-smoke host-nitro2d-smoke host-runtime-smoke host-task-smoke host-ui-smoke
 
 all: host-check
 	@mkdir -p $(BUILD) build
-	@ninja -C build res/pokemon/evo.narc res/pokemon/pl_poke_icon.narc res/graphics/underground_top_screen/underground_top_screen.narc
+	@ninja -C build res/pokemon/evo.narc res/pokemon/pl_poke_icon.narc res/graphics/underground_top_screen/underground_top_screen.narc res/text/pl_msg.narc res/fonts/pl_font.narc res/graphics/windows/pl_winframe.narc
 	@rm -rf $(ROMFS)
 	@mkdir -p $(ROMFS)/generated
 	@cp -R $(STATIC_ROMFS)/. $(ROMFS)
 	@cp $(GENERATED_EVO_NARC) $(ROMFS)/generated/evo.narc
 	@cp $(GENERATED_ICON_NARC) $(ROMFS)/generated/pl_poke_icon.narc
 	@cp $(GENERATED_UNDERGROUND_BG_NARC) $(ROMFS)/generated/underground_top_screen.narc
+	@cp $(GENERATED_MESSAGE_NARC) $(ROMFS)/generated/pl_msg.narc
+	@cp $(GENERATED_FONT_NARC) $(ROMFS)/generated/pl_font.narc
+	@cp $(GENERATED_WINDOW_NARC) $(ROMFS)/generated/pl_winframe.narc
 	@rm -f build/$(TARGET).elf build/$(TARGET).3dsx
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/platform/3ds/Makefile
 
@@ -129,7 +136,15 @@ host-nitro2d-smoke:
 		-o $(HOST_NITRO2D_SMOKE)
 	@$(HOST_NITRO2D_SMOKE)
 
-host-check: host-runtime-smoke host-task-smoke host-application-smoke host-clock-smoke host-memory-smoke host-communication-smoke host-nitro2d-smoke
+host-ui-smoke:
+	@mkdir -p $(dir $(HOST_UI_SMOKE))
+	@$(HOST_CC) -std=c11 -Wall -Wextra -Werror -Iplatform/include \
+		platform/common/nitro2d.c platform/common/game_ui.c \
+		platform/common/game_fade.c platform/tests/game_ui_smoke.c \
+		-o $(HOST_UI_SMOKE)
+	@$(HOST_UI_SMOKE)
+
+host-check: host-runtime-smoke host-task-smoke host-application-smoke host-clock-smoke host-memory-smoke host-communication-smoke host-nitro2d-smoke host-ui-smoke
 
 clean:
 	@rm -rf build-3ds-debug build-3ds-debug-fatal build-3ds-release \

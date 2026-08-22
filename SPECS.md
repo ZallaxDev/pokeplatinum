@@ -79,6 +79,8 @@ The native presentation base owns Citro3D and Citro2D initialization, one render
 
 The sprite path supports tiled uploads, repeated image submission, independent position/scale/rotation, source transparency, and per-instance alpha blending. Bounds-checked portable readers cover 4bpp NCGR character, NCLR palette, and text-mode NSCR data. Text BG decoding resolves 10-bit tile indices, per-entry palette banks, horizontal/vertical flips, and a caller-selected viewport into a logical surface. The bootstrap decodes Turtwig's first `32x32` frame and the Underground top-screen `256x192` background directly from generated NARCs; no source PNG is packaged into RomFS.
 
+Portable field-dialogue support decrypts original message-bank entries, reads variable-width 2bpp NFGR glyphs, assembles the 18-role message frame, and interprets ordinary glyphs, authored newlines, color changes, and EOS. Normal speed reveals one glyph every four game ticks; control codes consume no visible delay. The initial transition subset reproduces tick-counted black brightness fades through a GPU overlay. Paging, substitutions, scrolling, other control codes, and shaped fades remain follow-up work.
+
 ## Audio
 
 High-level music/SFX/cry policy remains game logic. NNS Sound and ARM7 services are replaced behind an audio backend. NDSP does not consume SDAT directly, so sequence/bank playback requires either a maintained decoder or an automated build-time conversion; manual per-asset conversion is prohibited.

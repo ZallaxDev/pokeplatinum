@@ -8,6 +8,8 @@
 #include "platform/game_application.h"
 #include "platform/game_clock.h"
 #include "platform/game_communication.h"
+#include "platform/game_fade.h"
+#include "platform/game_ui.h"
 #include "platform/graphics.h"
 #include "platform/game_runtime.h"
 #include "platform/game_task.h"
@@ -30,6 +32,16 @@
 #define UNDERGROUND_BG_PALETTE_MEMBER 0
 #define UNDERGROUND_BG_TILES_MEMBER 1
 #define UNDERGROUND_BG_TILEMAP_MEMBER 2
+#define UI_ARCHIVE_CAPACITY (5 * 1024 * 1024)
+#define MESSAGE_NARC_PATH "generated/pl_msg.narc"
+#define MESSAGE_BANK_MEMBER 213
+#define MESSAGE_ENTRY_FRIENDSHIP_CHECKER 88
+#define FONT_NARC_PATH "generated/pl_font.narc"
+#define MESSAGE_FONT_MEMBER 1
+#define FONT_PALETTE_MEMBER 6
+#define WINDOW_NARC_PATH "generated/pl_winframe.narc"
+#define MESSAGE_FRAME_MEMBER 2
+#define MESSAGE_FRAME_PALETTE_MEMBER 25
 #define TURTWIG_ICON_MEMBER 394
 #define TURTWIG_PALETTE_MEMBER 0
 #define TURTWIG_PALETTE_BANK 1
@@ -45,6 +57,17 @@ static size_t sGeneratedNarcSize;
 static unsigned char *sIconNarc;
 static uint32_t sIconPixels[32 * 32];
 static unsigned char sUndergroundBgNarc[UNDERGROUND_BG_NARC_CAPACITY];
+static unsigned char sUiArchive[UI_ARCHIVE_CAPACITY];
+static unsigned char sMessageFontData[34000];
+static unsigned char sFontPaletteData[128];
+static unsigned char sMessageFrameData[1024];
+static unsigned char sMessageFramePaletteData[1024];
+static uint16_t sDialogueText[256];
+static size_t sDialogueTextLength;
+static GameFont sMessageFont;
+static PlatformNclr sFontPalette;
+static PlatformNcgr sMessageFrame;
+static PlatformNclr sMessageFramePalette;
 
 enum BootstrapTaskPhase {
     BOOTSTRAP_TASK_MAIN,
@@ -475,6 +498,85 @@ static bool LoadUndergroundBackground(void)
     return true;
 }
 
+static bool LoadUiArchive(const char *path, PlatformNarc *archive)
+{
+    size_t size;
+
+    return PlatformFile_GetSize(path, &size) && size > 0
+        && size <= sizeof(sUiArchive)
+        && PlatformFile_Read(path, sUiArchive, size)
+        && PlatformNarc_Open(archive, sUiArchive, size);
+}
+
+static bool CopyUiMember(const PlatformNarc *archive, unsigned int member,
+    unsigned char *destination, size_t capacity, size_t *size)
+{
+    const void *data;
+
+    if (!PlatformNarc_GetMember(archive, member, &data, size)
+        || *size > capacity) return false;
+    memcpy(destination, data, *size);
+    return true;
+}
+
+static bool LoadDialogueAssets(void)
+{
+    PlatformNarc archive;
+    const void *messageBank;
+    size_t messageBankSize;
+    size_t fontSize;
+    size_t fontPaletteSize;
+    size_t frameSize;
+    size_t framePaletteSize;
+    unsigned int longestLine;
+
+    if (!LoadUiArchive(MESSAGE_NARC_PATH, &archive)
+        || !PlatformNarc_GetMember(&archive, MESSAGE_BANK_MEMBER,
+            &messageBank, &messageBankSize)
+        || !GameMessageBank_Decode(messageBank, messageBankSize,
+            MESSAGE_ENTRY_FRIENDSHIP_CHECKER, sDialogueText,
+            sizeof(sDialogueText) / sizeof(sDialogueText[0]),
+            &sDialogueTextLength)
+        || !LoadUiArchive(FONT_NARC_PATH, &archive)
+        || !CopyUiMember(&archive, MESSAGE_FONT_MEMBER, sMessageFontData,
+            sizeof(sMessageFontData), &fontSize)
+        || !CopyUiMember(&archive, FONT_PALETTE_MEMBER, sFontPaletteData,
+            sizeof(sFontPaletteData), &fontPaletteSize)
+        || !GameFont_Open(&sMessageFont, sMessageFontData, fontSize)
+        || !PlatformNclr_Open(&sFontPalette, sFontPaletteData, fontPaletteSize)
+        || !LoadUiArchive(WINDOW_NARC_PATH, &archive)
+        || !CopyUiMember(&archive, MESSAGE_FRAME_MEMBER, sMessageFrameData,
+            sizeof(sMessageFrameData), &frameSize)
+        || !CopyUiMember(&archive, MESSAGE_FRAME_PALETTE_MEMBER,
+            sMessageFramePaletteData, sizeof(sMessageFramePaletteData),
+            &framePaletteSize)
+        || !PlatformNcgr_Open(&sMessageFrame, sMessageFrameData, frameSize)
+        || !PlatformNclr_Open(&sMessageFramePalette,
+            sMessageFramePaletteData, framePaletteSize)) {
+        return false;
+    }
+    longestLine = GameFont_MeasureLongestLine(&sMessageFont, sDialogueText,
+        sDialogueTextLength);
+    if (longestLine == 0 || longestLine > 216) return false;
+    Debug_Log("DIALOGUE LONGEST LINE %u/216", longestLine);
+    Debug_Log("DIALOGUE REAL TEXT/FONT/FRAME OK");
+    return true;
+}
+
+static bool StartDialogue(GameDialoguePrinter *printer, GameFade *fade)
+{
+    uint32_t *pixels = PlatformGraphics_GetLogicalPixels(PLATFORM_SCREEN_TOP);
+
+    return LoadUndergroundBackground()
+        && GameDialogue_DrawWindow(pixels,
+            PLATFORM_LOGICAL_WIDTH * PLATFORM_LOGICAL_HEIGHT,
+            &sMessageFrame, &sMessageFramePalette, &sFontPalette)
+        && GameDialoguePrinter_Init(printer, sDialogueText, sDialogueTextLength,
+            &sMessageFont, &sFontPalette, pixels)
+        && PlatformGraphics_UploadLogicalSurface(PLATFORM_SCREEN_TOP)
+        && GameFade_Start(fade, true, 8, 1);
+}
+
 static bool BuildLogicalGrid(PlatformScreen screen)
 {
     uint32_t *pixels = PlatformGraphics_GetLogicalPixels(screen);
@@ -562,9 +664,9 @@ static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *
         "%s | TURTWIG x4", backgroundReady ? "UNDERGROUND BG" : "BG FAILED");
     PlatformGraphics_DrawText(83.0f, 228.0f, 0.28f, PLATFORM_RGBA(180, 200, 220, 255),
 #if PORT3DS_DEBUG_OVERLAY
-        "B previews BG | L+R+SELECT debug | START exits");
+        "A dialogue | B BG | L+R+SELECT debug | START exits");
 #else
-        "B previews BG | START exits");
+        "A dialogue | B BG | START exits");
 #endif
 }
 
@@ -589,7 +691,12 @@ int main(void)
     const char *lastInput = "NONE";
     bool heapHierarchyReady;
     bool backgroundReady;
+    bool dialogueReady;
     bool backgroundPreview = false;
+    bool dialoguePreview = false;
+    bool dialogueClosing = false;
+    GameDialoguePrinter dialoguePrinter;
+    GameFade dialogueFade = { 0 };
     bool platformReady = Platform_Init();
 
     if (!GameCommunication_InitOffline(&communication)
@@ -654,6 +761,10 @@ int main(void)
     if (!backgroundReady) {
         Debug_Error("UNDERGROUND BG FAILED");
     }
+    dialogueReady = LoadDialogueAssets();
+    if (!dialogueReady) {
+        Debug_Error("DIALOGUE ASSETS FAILED");
+    }
     if (LoadSaveSmokeRecord(&saveRecord)) {
         Debug_Log("SAVE VALUE %08lx", (unsigned long)saveRecord.value);
         if (PlatformSave_HasStagedWrite(SAVE_SMOKE_PATH)) {
@@ -680,6 +791,24 @@ int main(void)
             if (!GameRuntime_RunFrame(&gameRuntime)) {
                 Debug_Error("GAME FRAME FAILED");
                 break;
+            }
+            if (dialoguePreview) {
+                if (!GameFade_IsDone(&dialogueFade)) {
+                    GameFade_Tick(&dialogueFade);
+                    if (GameFade_IsDone(&dialogueFade) && dialogueClosing) {
+                        dialoguePreview = false;
+                        dialogueClosing = false;
+                        LoadUndergroundBackground();
+                    }
+                } else if (!dialogueClosing && !dialoguePrinter.complete) {
+                    bool changed;
+                    if (!GameDialoguePrinter_Tick(&dialoguePrinter, &changed)) {
+                        Debug_Error("DIALOGUE PRINT FAILED");
+                        dialoguePreview = false;
+                    } else if (changed) {
+                        PlatformGraphics_UploadLogicalSurface(PLATFORM_SCREEN_TOP);
+                    }
+                }
             }
         }
         PlatformInput_Update(&input);
@@ -709,8 +838,21 @@ int main(void)
             }
         }
         if (input.pressed & GAME_KEY_B) {
+            dialoguePreview = false;
             backgroundPreview = !backgroundPreview;
+            LoadUndergroundBackground();
             Debug_Log("BG PREVIEW %s", backgroundPreview ? "ON" : "OFF");
+        }
+        if ((input.pressed & GAME_KEY_A) && dialogueReady) {
+            if (!dialoguePreview) {
+                backgroundPreview = false;
+                dialoguePreview = StartDialogue(&dialoguePrinter, &dialogueFade);
+                dialogueClosing = false;
+                Debug_Log("DIALOGUE PREVIEW %s", dialoguePreview ? "ON" : "FAILED");
+            } else if (dialoguePrinter.complete && GameFade_IsDone(&dialogueFade)) {
+                dialogueClosing = GameFade_Start(&dialogueFade, false, 8, 1);
+                Debug_Log("DIALOGUE FADE OUT");
+            }
         }
 
 #if PORT3DS_DEBUG_OVERLAY
@@ -725,11 +867,14 @@ int main(void)
             Debug_Error("RTC UPDATE FAILED");
         }
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_TOP);
-        if (!backgroundPreview) {
+        if (!backgroundPreview && !dialoguePreview) {
             PlatformGraphics_DrawSpriteTest();
             RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler,
                 &gameRuntime, &gameState, &clock, heapHierarchyReady,
                 &communicationResult, backgroundReady);
+        }
+        if (dialoguePreview) {
+            PlatformGraphics_DrawTopFade(GameFade_GetBlackAlpha(&dialogueFade));
         }
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_BOTTOM);
         Debug_Render(frame, lastInput, tickScheduler.tickCount, tickScheduler.elapsedNs);

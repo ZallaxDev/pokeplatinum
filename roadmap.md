@@ -112,8 +112,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 - [x] Render DS BG tilemaps and palettes through the 3DS renderer.
   - Verify: a real Platinum background matches a reference capture.
   - Result: portable NCGR/NCLR/NSCR decoding rendered the real Underground top-screen background from generated NARC members 0/1/2; isolated Azahar's clean preview showed the coherent `256x192` map, grid, and lower panel, while host and sanitizer smokes verified palette banks and H/V flips.
-- [ ] Render windows, fonts, control codes, fades, and transitions.
+- [x] Render windows, fonts, control codes, fades, and transitions.
   - Verify: a real dialogue box displays wrapped text with correct colors and timing.
+  - Result: isolated Azahar rendered real `common_strings` entry 88 in the default Platinum message frame and NFGR font, with the authored two-line wrap, green `Friendship Checker` color span, four-tick glyph timing, and eight-tick black fades; host and sanitizer smokes verified decryption and each semantic deterministically.
 - [ ] Render OAM-compatible sprites and animations.
   - Verify: four real animated sprites show correct frame order, priority, palette, and alpha.
 - [ ] Load and display a real map and its metadata.

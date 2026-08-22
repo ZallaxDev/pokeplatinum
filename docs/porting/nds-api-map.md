@@ -9,8 +9,9 @@
 | `OS_TIMER_3`, timer registers | `src/timer.c` | monotonic timing | platform monotonic ticks | bootstrap scheduler implemented; gameplay pending |
 | `SysTaskManager_*`, `SysTask_*` | `src/sys_task_manager.c`, widespread users | priority queues across frame phases | fixed-capacity portable task manager | priority/mutation semantics and four queues implemented; users pending |
 | `RTC_*` | `src/rtc.c` | wall clock | `osGetTime` plus portable Gregorian conversion | acquisition and calendar base implemented; original callers pending |
-| `GX_*`, `GXS_*`, `G2_*` | graphics and applications | display and 2D engines | renderer commands via Citro2D/Citro3D | physical targets, logical surfaces, and 4bpp text BG presentation implemented |
-| `NNS_G2d*`, OAM manager | sprite/graphics modules | resource parsing and sprites | portable decoders plus sprite batches | NCGR/NCLR/NSCR text BG and icon subsets implemented; broader formats pending |
+| `GX_*`, `GXS_*`, `G2_*` | graphics and applications | display and 2D engines | renderer commands via Citro2D/Citro3D | physical targets, logical surfaces, text BGs, dialogue frames, and black fades implemented |
+| `NNS_G2d*`, OAM manager | sprite/graphics modules | resource parsing and sprites | portable decoders plus sprite batches | NCGR/NCLR/NSCR text BG, NFGR font, frame, and icon subsets implemented |
+| Message banks, `Text_AddPrinterWithParams` | field/UI modules | encrypted text, controls, timed glyphs | portable message/font/dialogue pipeline | glyph, newline, color, EOS, normal timing implemented; broader controls pending |
 | `NNS_G3d*`, `G3_*` | field, battle, effects | model rendering | Citro3D backend | pending |
 | `NNS_Gfd*` | transfers and graphics | VRAM allocation/upload | explicit GPU resource manager | pending |
 | `NNS_Snd*`, `MIC_*` | sound modules | audio and recording | NDSP/conversion; 3DS mic later | pending |

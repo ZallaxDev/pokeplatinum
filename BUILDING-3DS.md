@@ -84,5 +84,6 @@ Debug and release objects are isolated in `build-3ds-debug/` and `build-3ds-rele
 8. Confirm the top-screen `RTC` value matches the 3DS system date and time.
 9. Confirm the top screen reports `Network: OFFLINE - UNAVAILABLE` and continues updating.
 10. Press B and confirm the clean Underground background preview has coherent paths, palette, grid, and lower panel; press B again to restore diagnostics.
+11. Press A and confirm the real Friendship Checker dialogue fades in, reveals one glyph every four ticks across two lines, and colors `Friendship Checker` green. Press A after completion and confirm it fades out.
 
-`make check-3ds-host` also verifies calendar rollover, heap semantics, offline results, and NSCR palette-bank/H/V-flip decoding.
+`make check-3ds-host` also verifies calendar rollover, heap semantics, offline results, NSCR decoding, message decryption, dialogue control colors/newlines, four-tick printing, and eight-tick fades.

@@ -136,6 +136,16 @@ static uint32_t DecodeColor(const PlatformNclr *palette, size_t colorIndex,
     return red | green << 8 | blue << 16 | (transparent ? 0u : 255u) << 24;
 }
 
+bool PlatformNclr_GetColor(const PlatformNclr *palette, size_t colorIndex,
+    bool transparent, uint32_t *color)
+{
+    if (palette == NULL || color == NULL || colorIndex >= palette->colorCount) {
+        return false;
+    }
+    *color = DecodeColor(palette, colorIndex, transparent);
+    return true;
+}
+
 bool PlatformNitro2D_DecodeTiles4Bpp(const PlatformNcgr *image,
     const PlatformNclr *palette, unsigned int paletteBank, unsigned int firstTile,
     unsigned int width, unsigned int height, uint32_t *pixels, size_t pixelCount)
