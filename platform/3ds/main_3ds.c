@@ -15,6 +15,7 @@ int main(void)
     BOOL passed;
 
     gfxInitDefault();
+    romfsInit();
     consoleInit(GFX_TOP, NULL);
 
     passed = RealPortSmoke_Run(failure, sizeof(failure));
@@ -22,6 +23,7 @@ int main(void)
     printf("Original src/sys_task_manager.c: %s\n", passed ? "PASS" : "FAIL");
     printf("Original src/map_tile_behavior.c: %s\n", passed ? "PASS" : "FAIL");
     printf("Original src/overlay_manager.c: %s\n", passed ? "PASS" : "FAIL");
+    printf("Original src/narc.c: %s\n", passed ? "PASS" : "FAIL");
     if (!passed) {
         printf("\n%s\n", failure);
     }
@@ -37,6 +39,7 @@ int main(void)
         gspWaitForVBlank();
     }
 
+    romfsExit();
     gfxExit();
     return passed ? 0 : 1;
 }

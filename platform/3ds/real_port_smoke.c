@@ -2,9 +2,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "constants/field/map_tile_behaviors.h"
+#include "heap.h"
 #include "map_tile_behavior.h"
+#include "narc.h"
 #include "overlay_manager.h"
 #include "runtime_adapters.h"
 #include "sys_task_manager.h"
@@ -102,6 +105,9 @@ BOOL RealPortSmoke_Run(char *failure, size_t failureSize)
         7,
     };
     ApplicationManager *appManager;
+    NARC *narc;
+    void *narcMember;
+    u8 memberMagic[4];
 
     if (memory == NULL) {
         return Fail(failure, failureSize, "scheduler allocation failed");
@@ -179,6 +185,34 @@ BOOL RealPortSmoke_Run(char *failure, size_t failureSize)
         return Fail(failure, failureSize, "original application lifecycle failed");
     }
     ApplicationManager_Free(appManager);
+
+    narc = NARC_ctor(NARC_INDEX_DEMO__TITLE__TITLEDEMO, HEAP_ID_APPLICATION);
+    if (narc == NULL || NARC_GetFileCount(narc) != 29 || NARC_GetMemberSize(narc, 11) < 4) {
+        if (narc != NULL) {
+            NARC_dtor(narc);
+        }
+        return Fail(failure, failureSize, "original NARC metadata parse failed");
+    }
+
+    narcMember = NARC_AllocAndReadWholeMember(narc, 11, HEAP_ID_APPLICATION);
+    if (narcMember == NULL || memcmp(narcMember, "RLCN", 4) != 0) {
+        Heap_Free(narcMember);
+        NARC_dtor(narc);
+        return Fail(failure, failureSize, "original NARC member read failed");
+    }
+    Heap_Free(narcMember);
+
+    NARC_ReadFromMember(narc, 11, 0, sizeof(memberMagic), memberMagic);
+    if (memcmp(memberMagic, "RLCN", sizeof(memberMagic)) != 0) {
+        NARC_dtor(narc);
+        return Fail(failure, failureSize, "original partial NARC read failed");
+    }
+    NARC_dtor(narc);
+
+    NARC_ReadFromMemberByIndexPair(memberMagic, NARC_INDEX_DEMO__TITLE__TITLEDEMO, 11, 0, sizeof(memberMagic));
+    if (memcmp(memberMagic, "RLCN", sizeof(memberMagic)) != 0) {
+        return Fail(failure, failureSize, "original indexed NARC read failed");
+    }
 
     failure[0] = '\0';
     return TRUE;

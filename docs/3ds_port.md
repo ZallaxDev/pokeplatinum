@@ -27,6 +27,7 @@ The target recompiles and executes these game sources with devkitARM:
 - `src/sys_task_manager.c`
 - `src/map_tile_behavior.c`
 - `src/overlay_manager.c`
+- `src/narc.c`
 
 The libctru entry point is only a verification shell. It does not implement a
 parallel frontend or game runtime. Original game translation units retain the
@@ -41,7 +42,13 @@ ported. Its shared header only has GCC portability fixes for an ineffective
 scalar `const` qualifier and a typed overlay sentinel; behavior and layout are
 unchanged.
 
-The next runtime slice is the original NARC reader and Nitro FS interface over
-RomFS. The long-term entry path remains `src/main.c:NitroMain`; reaching it
-requires adapters for the Nitro OS, input, RTC, sound, graphics, save-device,
-and remaining overlay boundaries.
+The original NARC reader opens generated resources through a minimal Nitro
+`FSFile` compatibility surface backed by standard native files. The 3DS build
+mounts `titledemo.narc` at its original NitroFS path,
+`demo/title/titledemo.narc`, and verifies archive metadata plus whole and
+partial member reads. Resource paths remain owned by `src/narc.c`.
+
+The next runtime slice is the original heap implementation or another
+boot-path subsystem that can be isolated cleanly. The long-term entry path
+remains `src/main.c:NitroMain`; reaching it requires adapters for the Nitro OS,
+input, RTC, sound, graphics, save-device, and remaining overlay boundaries.

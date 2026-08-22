@@ -28,4 +28,6 @@ void ErrorHandling_AssertFail(void);
 #define GF_ASSERT(condition) ((condition) ? (void)0 : ErrorHandling_AssertFail())
 #endif
 
+#include "nitro/fs.h"
+
 #endif // POKEPLATINUM_3DS_COMPAT_H

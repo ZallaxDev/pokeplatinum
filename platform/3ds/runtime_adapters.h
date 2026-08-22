@@ -4,6 +4,7 @@
 #include "nitro/fs.h"
 
 void RuntimeAdapters_Reset(void);
+void RuntimeAdapters_SetFileRoot(const char *root);
 BOOL RuntimeAdapters_IsOverlayLoaded(FSOverlayID overlayID);
 u32 RuntimeAdapters_GetOverlayLoadCount(void);
 u32 RuntimeAdapters_GetOverlayUnloadCount(void);

@@ -12,17 +12,20 @@ BUILD := build-3ds-real
 SOURCES := platform/3ds src
 INCLUDES := platform/3ds/include platform/3ds include
 HOSTCC ?= cc
+NARC_SOURCE := build/res/graphics/title_screen/titledemo.narc
+ROMFS_ROOT := $(BUILD)/romfs
+NARC_ROMFS := $(ROMFS_ROOT)/demo/title/titledemo.narc
 
 ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 COMMON_FLAGS := -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
 	-fsigned-char -std=c11 -include pokeplatinum_compat.h
-CFLAGS := -g -O2 -mword-relocations $(ARCH) $(COMMON_FLAGS) $(INCLUDE)
+CFLAGS := -g -O2 -mword-relocations $(ARCH) $(COMMON_FLAGS) $(INCLUDE) -D__3DS__
 LDFLAGS := -specs=3dsx.specs -g $(ARCH) \
 	-Wl,--gc-sections,--no-enum-size-warning,-Map,$(notdir $*.map)
 LIBS := -lctru -lm
 LIBDIRS := $(CTRULIB)
 
-GAME_CFILES := sys_task_manager.c map_tile_behavior.c overlay_manager.c
+GAME_CFILES := sys_task_manager.c map_tile_behavior.c overlay_manager.c narc.c
 PLATFORM_CFILES := main_3ds.c real_port_smoke.c runtime_adapters.c
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
@@ -31,11 +34,12 @@ export OUTPUT := $(CURDIR)/$(BUILD)/$(TARGET)
 export TOPDIR := $(CURDIR)
 export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
 export DEPSDIR := $(CURDIR)/$(BUILD)
+export ROMFS := $(CURDIR)/$(ROMFS_ROOT)
 export APP_TITLE := Pokemon Platinum Real Port
 export APP_DESCRIPTION := Original game code portability bootstrap
 export APP_AUTHOR := pret contributors
 export _3DSXDEPS := $(OUTPUT).smdh
-export _3DSXFLAGS := --smdh=$(OUTPUT).smdh
+export _3DSXFLAGS := --smdh=$(OUTPUT).smdh --romfs=$(ROMFS)
 export OFILES := $(GAME_CFILES:.c=.o) $(PLATFORM_CFILES:.c=.o)
 export LD := $(CC)
 export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
@@ -44,11 +48,11 @@ export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 .PHONY: all check-host clean
 
-all:
+all: $(NARC_ROMFS)
 	@mkdir -p $(BUILD)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/platform/3ds/Makefile
 
-check-host:
+check-host: $(NARC_ROMFS)
 	@mkdir -p $(BUILD)
 	$(HOSTCC) $(COMMON_FLAGS) $(foreach dir,$(INCLUDES),-I$(dir)) \
 		-fno-short-enums \
@@ -60,6 +64,13 @@ check-host:
 
 clean:
 	@rm -rf $(BUILD)
+
+$(NARC_SOURCE):
+	$(MAKE) -f Makefile target MESON_TARGET=res/graphics/title_screen/titledemo.narc
+
+$(NARC_ROMFS): $(NARC_SOURCE)
+	@mkdir -p $(@D)
+	cp $< $@
 
 else
 

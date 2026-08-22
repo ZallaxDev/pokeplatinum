@@ -11,6 +11,6 @@ int main(void)
         return 1;
     }
 
-    puts("REAL PORT SMOKE OK: original scheduler, tile rules, application manager");
+    puts("REAL PORT SMOKE OK: original scheduler, tile rules, application manager, NARC");
     return 0;
 }
