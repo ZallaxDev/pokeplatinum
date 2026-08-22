@@ -64,6 +64,7 @@ BOOL ApplicationManager_Exec(ApplicationManager *appMan)
         }
 
         appMan->execState = OVERLAY_EXEC_INIT;
+        // fall through
 
     case OVERLAY_EXEC_INIT:
         if (appMan->template.init(appMan, &appMan->procState) == TRUE) {

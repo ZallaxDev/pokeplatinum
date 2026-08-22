@@ -22,8 +22,8 @@ LDFLAGS := -specs=3dsx.specs -g $(ARCH) \
 LIBS := -lctru -lm
 LIBDIRS := $(CTRULIB)
 
-GAME_CFILES := sys_task_manager.c map_tile_behavior.c
-PLATFORM_CFILES := main_3ds.c real_port_smoke.c
+GAME_CFILES := sys_task_manager.c map_tile_behavior.c overlay_manager.c
+PLATFORM_CFILES := main_3ds.c real_port_smoke.c runtime_adapters.c
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 
@@ -53,7 +53,8 @@ check-host:
 	$(HOSTCC) $(COMMON_FLAGS) $(foreach dir,$(INCLUDES),-I$(dir)) \
 		-fno-short-enums \
 		$(addprefix src/,$(GAME_CFILES)) \
-		platform/3ds/real_port_smoke.c platform/3ds/assert_host.c \
+		platform/3ds/real_port_smoke.c platform/3ds/runtime_adapters.c \
+		platform/3ds/assert_host.c \
 		platform/3ds/smoke_host_main.c -o $(BUILD)/real-port-smoke
 	$(BUILD)/real-port-smoke
 

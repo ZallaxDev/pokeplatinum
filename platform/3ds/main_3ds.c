@@ -21,6 +21,7 @@ int main(void)
     printf("Pokemon Platinum real-port bootstrap\n\n");
     printf("Original src/sys_task_manager.c: %s\n", passed ? "PASS" : "FAIL");
     printf("Original src/map_tile_behavior.c: %s\n", passed ? "PASS" : "FAIL");
+    printf("Original src/overlay_manager.c: %s\n", passed ? "PASS" : "FAIL");
     if (!passed) {
         printf("\n%s\n", failure);
     }

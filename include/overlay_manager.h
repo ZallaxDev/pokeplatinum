@@ -5,7 +5,7 @@
 
 #include "constants/heap.h"
 
-#define FS_OVERLAY_ID_NONE -1
+#define FS_OVERLAY_ID_NONE ((FSOverlayID)-1)
 
 typedef struct ApplicationManager ApplicationManager;
 
@@ -15,7 +15,7 @@ typedef struct ApplicationManagerTemplate {
     OverlayFunc init;
     OverlayFunc main;
     OverlayFunc exit;
-    const FSOverlayID overlayID;
+    FSOverlayID overlayID;
 } ApplicationManagerTemplate;
 
 struct ApplicationManager {

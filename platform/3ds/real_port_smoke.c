@@ -5,6 +5,8 @@
 
 #include "constants/field/map_tile_behaviors.h"
 #include "map_tile_behavior.h"
+#include "overlay_manager.h"
+#include "runtime_adapters.h"
 #include "sys_task_manager.h"
 
 typedef struct TaskSmokeContext {
@@ -13,6 +15,46 @@ typedef struct TaskSmokeContext {
     int count;
     BOOL addedTask;
 } TaskSmokeContext;
+
+typedef struct ApplicationSmokeContext {
+    int calls[8];
+    int count;
+} ApplicationSmokeContext;
+
+static BOOL SmokeApplicationInit(ApplicationManager *appMan, int *state)
+{
+    ApplicationSmokeContext *context = ApplicationManager_Args(appMan);
+
+    context->calls[context->count++] = 10 + *state;
+    if ((*state)++ == 0) {
+        return FALSE;
+    }
+
+    ApplicationManager_NewData(appMan, sizeof(u32), HEAP_ID_APPLICATION);
+    *(u32 *)ApplicationManager_Data(appMan) = 0x12345678;
+    return TRUE;
+}
+
+static BOOL SmokeApplicationMain(ApplicationManager *appMan, int *state)
+{
+    ApplicationSmokeContext *context = ApplicationManager_Args(appMan);
+
+    context->calls[context->count++] = 20 + *state;
+    return ++(*state) == 2;
+}
+
+static BOOL SmokeApplicationExit(ApplicationManager *appMan, int *state)
+{
+    ApplicationSmokeContext *context = ApplicationManager_Args(appMan);
+
+    context->calls[context->count++] = 30 + *state;
+    if (*(u32 *)ApplicationManager_Data(appMan) != 0x12345678) {
+        return FALSE;
+    }
+
+    ApplicationManager_FreeData(appMan);
+    return TRUE;
+}
 
 static void RecordTask(SysTask *task, void *param)
 {
@@ -52,6 +94,14 @@ BOOL RealPortSmoke_Run(char *failure, size_t failureSize)
     void *memory = malloc(SysTaskManager_GetRequiredSize(maxTasks));
     TaskSmokeContext context = { 0 };
     SysTaskManager *manager;
+    ApplicationSmokeContext appContext = { 0 };
+    const ApplicationManagerTemplate appTemplate = {
+        SmokeApplicationInit,
+        SmokeApplicationMain,
+        SmokeApplicationExit,
+        7,
+    };
+    ApplicationManager *appManager;
 
     if (memory == NULL) {
         return Fail(failure, failureSize, "scheduler allocation failed");
@@ -103,6 +153,32 @@ BOOL RealPortSmoke_Run(char *failure, size_t failureSize)
         || TileBehavior_IsSurfable(TILE_BEHAVIOR_SAND)) {
         return Fail(failure, failureSize, "original tile behavior rules failed");
     }
+
+    RuntimeAdapters_Reset();
+    appManager = ApplicationManager_New(&appTemplate, &appContext, HEAP_ID_APPLICATION);
+    if (ApplicationManager_Exec(appManager)
+        || !RuntimeAdapters_IsOverlayLoaded(7)
+        || appContext.count != 1
+        || appContext.calls[0] != 10) {
+        ApplicationManager_Free(appManager);
+        return Fail(failure, failureSize, "original application load/init failed");
+    }
+
+    while (!ApplicationManager_Exec(appManager)) {
+    }
+
+    if (appContext.count != 5
+        || appContext.calls[1] != 11
+        || appContext.calls[2] != 20
+        || appContext.calls[3] != 21
+        || appContext.calls[4] != 30
+        || RuntimeAdapters_IsOverlayLoaded(7)
+        || RuntimeAdapters_GetOverlayLoadCount() != 1
+        || RuntimeAdapters_GetOverlayUnloadCount() != 1) {
+        ApplicationManager_Free(appManager);
+        return Fail(failure, failureSize, "original application lifecycle failed");
+    }
+    ApplicationManager_Free(appManager);
 
     failure[0] = '\0';
     return TRUE;
