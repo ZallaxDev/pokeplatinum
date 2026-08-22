@@ -14,7 +14,7 @@
 | `NNS_G3d*`, `G3_*` | field, battle, effects | model rendering | Citro3D backend | pending |
 | `NNS_Gfd*` | transfers and graphics | VRAM allocation/upload | explicit GPU resource manager | pending |
 | `NNS_Snd*`, `MIC_*` | sound modules | audio and recording | NDSP/conversion; 3DS mic later | pending |
-| `OS_AllocFromMainArena*`, `NNS_Fnd*` | `src/system.c`, `src/heap.c` | arenas/heaps | portable heap backend | base implemented; game hierarchy pending |
+| `OS_AllocFromMainArena*`, `NNS_Fnd*` | `src/system.c`, `src/heap.c` | arenas/heaps | contiguous portable arenas | hierarchy, low/high allocation, free and reuse implemented; callers pending |
 | `MI_Cpu*`, `MI_Dma*` | widespread | memory operations | `memcpy`/`memset` or backend transfer | pending by call semantics |
 | `DC_FlushRange`, `DC_InvalidateRange` | graphics/audio/wireless | device coherency | backend-specific synchronization | pending |
 | `FS_LoadOverlay*` | `src/game_overlay.c` | dynamic code modules | static application registry | registry and multiframe init/main/exit runner implemented; real templates pending |

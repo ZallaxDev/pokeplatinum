@@ -14,9 +14,13 @@ enum PlatformHeapID {
 void PlatformHeap_Init(void);
 void PlatformHeap_Shutdown(void);
 bool PlatformHeap_Create(uint32_t heapId, size_t capacity);
+bool PlatformHeap_CreateChild(uint32_t parentHeapId, uint32_t childHeapId,
+    size_t capacity, bool atEnd);
 bool PlatformHeap_Destroy(uint32_t heapId);
 void *PlatformHeap_Alloc(uint32_t heapId, size_t size, size_t alignment);
+void *PlatformHeap_AllocAtEnd(uint32_t heapId, size_t size, size_t alignment);
 bool PlatformHeap_Free(uint32_t heapId, void *allocation);
+size_t PlatformHeap_GetCapacity(uint32_t heapId);
 size_t PlatformHeap_GetAllocatedSize(uint32_t heapId);
 size_t PlatformHeap_GetAllocationCount(uint32_t heapId);
 

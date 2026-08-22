@@ -33,6 +33,7 @@ HOST_RUNTIME_SMOKE := build-3ds-host/game_runtime_smoke
 HOST_TASK_SMOKE := build-3ds-host/game_task_smoke
 HOST_APPLICATION_SMOKE := build-3ds-host/game_application_smoke
 HOST_CLOCK_SMOKE := build-3ds-host/game_clock_smoke
+HOST_MEMORY_SMOKE := build-3ds-host/memory_smoke
 
 ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 CFLAGS := -g -Wall -Wextra -Werror -O2 -mword-relocations -ffunction-sections $(ARCH)
@@ -62,7 +63,7 @@ export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 	$(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
-.PHONY: all clean host-application-smoke host-check host-clock-smoke host-runtime-smoke host-task-smoke
+.PHONY: all clean host-application-smoke host-check host-clock-smoke host-memory-smoke host-runtime-smoke host-task-smoke
 
 all: host-check
 	@mkdir -p $(BUILD) build
@@ -103,7 +104,14 @@ host-clock-smoke:
 		-o $(HOST_CLOCK_SMOKE)
 	@$(HOST_CLOCK_SMOKE)
 
-host-check: host-runtime-smoke host-task-smoke host-application-smoke host-clock-smoke
+host-memory-smoke:
+	@mkdir -p $(dir $(HOST_MEMORY_SMOKE))
+	@$(HOST_CC) -std=c11 -Wall -Wextra -Werror -Iplatform/include \
+		platform/common/memory.c platform/tests/memory_smoke.c \
+		-o $(HOST_MEMORY_SMOKE)
+	@$(HOST_MEMORY_SMOKE)
+
+host-check: host-runtime-smoke host-task-smoke host-application-smoke host-clock-smoke host-memory-smoke
 
 clean:
 	@rm -rf build-3ds-debug build-3ds-debug-fatal build-3ds-release \

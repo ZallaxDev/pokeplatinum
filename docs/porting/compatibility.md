@@ -10,7 +10,7 @@
 | Touch input | Pass | BOOT-01 debug `c2cb53d...c83c4bf` | Corner smoke tests report `1,2` through `254,184` | DS logical range is `0..255,0..191` |
 | RomFS | Pass | BOOT-01 debug `c2cb53d...c83c4bf` | `ROMFS OK`; size 53; FNV-1a `9cd859d0` | `port3ds-smoke.txt` only |
 | Monotonic game ticks | Pass | BOOT-01 debug `7e4a3cf...aed5c6` | 37,243 ticks at 59.825 Hz after about 622.5 seconds | Target 59.8261 Hz; 37,246 presentation frames |
-| Portable heap base | Pass | BOOT-01 debug `ecf0ea22...08e8a3` | Overlay reports `HEAP TEST OK` for three IDs and alignments | Game hierarchy/direction not connected yet |
+| Portable heap base | Pass | BOOT-01 debug `ecf0ea22...08e8a3` | Overlay reports `HEAP TEST OK` for three IDs and alignments | Superseded by contiguous hierarchical arenas below |
 | Transactional save base | Pass | BOOT-01 debug `086ac4d8...8c3b9f6` | Interrupted stage retained old value; committed value survived restart | Smoke record only; game serializer not connected |
 | Generated NARC export | Pass | BOOT-01 debug `46ec493e...37c53b` | `evo.narc`: 26,468 bytes, FNV-1a `a955d414` | Source artifact SHA-256 `fe6e4ec4...7862d` |
 | Portable NARC parser | Pass | BOOT-01 debug `b9889e5c...72adb3` | 508 members; sampled sizes `44/44/44`; `NARC PARSE OK` | Validates all member ranges |
@@ -22,4 +22,5 @@
 | Portable task manager | Pass | BOOT-01 debug `b2c73f62...cd2a7b` | Main/boundary/print/after counters remain equal and ordered; host mutation smoke passes | Fixed capacity; game tasks not connected yet |
 | Static application registry | Pass | BOOT-01 debug `283692d4...2257a6` | ALPHA/BETA alternate with visible init/main/exit sequence; host sequence smoke passes | Real application templates not registered yet |
 | RTC and calendar | Pass | BOOT-01 debug `8f98d553...c6a8ab` | Azahar clock matched host within 4 seconds; host rollover and sanitizer smokes pass | Supports Platinum's 2000-2099 RTC range |
+| Game heap hierarchy | Pass | BOOT-01 debug `80e50ef...0f70fd` | Azahar reports `LOW/HIGH OK`; host and sanitizer verify child arenas, alignment, direction, reuse, and destroy guards | Original heap callers not connected yet |
 | Gameplay | Not started | - | - | NDS runtime not linked yet |

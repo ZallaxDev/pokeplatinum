@@ -83,4 +83,4 @@ Debug and release objects are isolated in `build-3ds-debug/` and `build-3ds-rele
 7. Press START and confirm controlled exit.
 8. Confirm the top-screen `RTC` value matches the 3DS system date and time.
 
-`make check-3ds-host` also verifies leap-day, month, and year rollover using the portable calendar implementation.
+`make check-3ds-host` also verifies leap-day, month, and year rollover, plus parent/child heap capacity, aligned low/high allocation, free-range reuse, and hierarchy destruction guards.

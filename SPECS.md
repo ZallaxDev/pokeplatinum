@@ -93,7 +93,7 @@ Original save structures, checksums, block counters, and recovery semantics are 
 
 ## Memory
 
-The port preserves layouts and alignment where gameplay or serialized data requires them, but does not reproduce the NDS address map. The portable heap base tracks capacity, allocation count, requested size, alignment, and owning heap ID without libctru dependencies. Game heap hierarchy and front/back allocation semantics are introduced separately when the original heap users are connected. Game heaps and GPU/resource memory are separate. Pointer arithmetic uses `uintptr_t`, not integer casts that assume host pointer size. Direct VRAM, ITCM, DTCM, shared-memory, and register addresses are prohibited in portable code.
+The port preserves layouts and alignment where gameplay or serialized data requires them, but does not reproduce the NDS address map. Portable heaps own contiguous arenas and track capacity, allocation count, requested size, and free ranges without libctru dependencies. Child heaps reserve their arena from the low or high end of a parent and return it when destroyed; allocations likewise support aligned low/high placement, arbitrary-order free, coalescing, and reuse. A heap cannot be destroyed while it owns allocations or children. Game heaps and GPU/resource memory are separate. Pointer arithmetic uses `uintptr_t`, not integer casts that assume host pointer size. Direct VRAM, ITCM, DTCM, shared-memory, and register addresses are prohibited in portable code.
 
 ## Overlays And ARM7
 

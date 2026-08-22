@@ -100,8 +100,9 @@ Task states: `[ ]` pending, `[x]` complete, `[-]` blocked, `[~]` in progress.
 - [x] Port RTC acquisition while preserving calendar calculations.
   - Verify: displayed date/time matches the 3DS system clock and a day rollover test passes.
   - Result: isolated Azahar displayed `2026-08-22 20:10:36` against host time `20:10:40 CEST`; host and sanitizer smokes passed leap-day, month, and year rollovers.
-- [ ] Port game heap hierarchy and allocation direction semantics.
+- [x] Port game heap hierarchy and allocation direction semantics.
   - Verify: representative game allocations pass alignment and high/low allocation tests.
+  - Result: parent-backed child heaps reserve from both ends and release capacity on destroy; host and sanitizer smokes passed 16/32/64-byte alignment, low/high ordering, free-range reuse, and hierarchy guards, while isolated Azahar displayed `Heap hierarchy: LOW/HIGH OK`.
 - [ ] Disable unsupported communications through one explicit offline backend.
   - Verify: networking menu probes return a visible unavailable message without hanging or crashing.
 

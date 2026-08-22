@@ -270,6 +270,42 @@ static bool RunHeapSmokeTest(void)
     return passed;
 }
 
+static bool RunHeapHierarchySmokeTest(void)
+{
+    void *low = NULL;
+    void *high = NULL;
+    bool passed = PlatformHeap_Create(PLATFORM_HEAP_SYSTEM, 8192)
+        && PlatformHeap_CreateChild(PLATFORM_HEAP_SYSTEM, PLATFORM_HEAP_DEBUG,
+            2048, false)
+        && PlatformHeap_CreateChild(PLATFORM_HEAP_SYSTEM, PLATFORM_HEAP_APPLICATION,
+            2048, true);
+
+    if (passed) {
+        low = PlatformHeap_Alloc(PLATFORM_HEAP_DEBUG, 128, 32);
+        high = PlatformHeap_AllocAtEnd(PLATFORM_HEAP_DEBUG, 128, 64);
+        passed = low != NULL && high != NULL
+            && (uintptr_t)low % 32 == 0 && (uintptr_t)high % 64 == 0
+            && (uintptr_t)low < (uintptr_t)high
+            && PlatformHeap_GetAllocatedSize(PLATFORM_HEAP_SYSTEM) == 4096;
+    }
+    if (low != NULL) {
+        passed &= PlatformHeap_Free(PLATFORM_HEAP_DEBUG, low);
+    }
+    if (high != NULL) {
+        passed &= PlatformHeap_Free(PLATFORM_HEAP_DEBUG, high);
+    }
+    if (PlatformHeap_GetCapacity(PLATFORM_HEAP_DEBUG) != 0) {
+        passed &= PlatformHeap_Destroy(PLATFORM_HEAP_DEBUG);
+    }
+    if (PlatformHeap_GetCapacity(PLATFORM_HEAP_APPLICATION) != 0) {
+        passed &= PlatformHeap_Destroy(PLATFORM_HEAP_APPLICATION);
+    }
+    if (PlatformHeap_GetCapacity(PLATFORM_HEAP_SYSTEM) != 0) {
+        passed &= PlatformHeap_Destroy(PLATFORM_HEAP_SYSTEM);
+    }
+    return passed;
+}
+
 static SaveSmokeRecord MakeSaveSmokeRecord(uint32_t value)
 {
     SaveSmokeRecord record = {
@@ -427,7 +463,7 @@ static bool BuildLogicalGrid(PlatformScreen screen)
 static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *input,
     const char *lastInput, const PlatformTickScheduler *tickScheduler,
     const GameRuntime *gameRuntime, const BootstrapGameState *gameState,
-    const GameClockDateTime *clock)
+    const GameClockDateTime *clock, bool heapHierarchyReady)
 {
     unsigned long long elapsedMs = tickScheduler->elapsedNs / 1000000ULL;
     unsigned long long rateMilliHz = elapsedMs == 0
@@ -458,6 +494,10 @@ static void RenderBootstrapScreen(bool platformReady, const PlatformInputState *
         "RTC: %04u-%02u-%02u %02u:%02u:%02u",
         clock->year, clock->month, clock->day,
         clock->hour, clock->minute, clock->second);
+    PlatformGraphics_DrawText(52.0f, 189.0f, 0.34f,
+        heapHierarchyReady ? PLATFORM_RGBA(180, 240, 210, 255)
+                           : PLATFORM_RGBA(255, 120, 120, 255),
+        "Heap hierarchy: %s", heapHierarchyReady ? "LOW/HIGH OK" : "FAILED");
     PlatformGraphics_DrawText(52.0f, 96.0f, 0.38f, PLATFORM_RGBA(180, 240, 210, 255),
         "M/B/P/A %llu/%llu/%llu/%llu %s",
         (unsigned long long)gameState->taskCounts[BOOTSTRAP_TASK_MAIN],
@@ -492,6 +532,7 @@ int main(void)
     unsigned long long frame = 0;
     size_t smokeSize = 0;
     const char *lastInput = "NONE";
+    bool heapHierarchyReady;
     bool platformReady = Platform_Init();
 
     if (platformReady && GameClock_Read(&clock)) {
@@ -532,6 +573,12 @@ int main(void)
         Debug_Log("HEAP TEST OK");
     } else {
         Debug_Error("HEAP TEST FAILED");
+    }
+    heapHierarchyReady = RunHeapHierarchySmokeTest();
+    if (heapHierarchyReady) {
+        Debug_Log("HEAP HIERARCHY LOW/HIGH OK");
+    } else {
+        Debug_Error("HEAP HIERARCHY FAILED");
     }
     if (!LoadTurtwigIcon()) {
         Debug_Error("PLATINUM ASSET FAILED");
@@ -605,7 +652,7 @@ int main(void)
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_TOP);
         PlatformGraphics_DrawSpriteTest();
         RenderBootstrapScreen(platformReady, &input, lastInput, &tickScheduler,
-            &gameRuntime, &gameState, &clock);
+            &gameRuntime, &gameState, &clock, heapHierarchyReady);
         PlatformGraphics_PresentLogicalSurface(PLATFORM_SCREEN_BOTTOM);
         Debug_Render(frame, lastInput, tickScheduler.tickCount, tickScheduler.elapsedNs);
         Platform_WaitForFrame();
